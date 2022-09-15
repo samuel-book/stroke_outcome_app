@@ -60,6 +60,9 @@ time_input = st.sidebar.slider(
     'Choose the treatment time in minutes.',
     0, time_no_effect, 240 # start, end, default value
     )
+treatment_time_str = (
+    f'Treatment time: {time_input//60} hours {time_input%60} minutes')
+st.sidebar.write(treatment_time_str)
 
 occlusion_str = 'nlvo' if 'nLVO' in occlusion_input else 'lvo'
 treatment_str = 'mt' if 'MT' in treatment_input else 'ivt'
@@ -88,16 +91,34 @@ dist_t0_treatment_str = ('t0_treatment_' + occlusion_str + '_' +
 dist_no_effect_str = ('no_effect_' + occlusion_str + '_' + 
     treatment_str + '_deaths')
 
-# Get the dists from the data array using the strings: 
-dist_pre_stroke = mrs_dists_bins.loc[dist_pre_stroke_str]
-dist_no_treatment = mrs_dists_bins.loc[dist_no_treatment_str]
-dist_t0_treatment = mrs_dists_bins.loc[dist_t0_treatment_str]
-dist_no_effect = mrs_dists_bins.loc[dist_no_effect_str]
+try:
+    # Get the dists from the data array using the strings: 
+    dist_pre_stroke = mrs_dists_bins.loc[dist_pre_stroke_str].values
+    dist_no_treatment = mrs_dists_bins.loc[dist_no_treatment_str].values
+    dist_t0_treatment = mrs_dists_bins.loc[dist_t0_treatment_str].values
+    dist_no_effect = mrs_dists_bins.loc[dist_no_effect_str].values
 
-dist_cumsum_pre_stroke = mrs_dists_cumsum.loc[dist_pre_stroke_str]
-dist_cumsum_no_treatment = mrs_dists_cumsum.loc[dist_no_treatment_str]
-dist_cumsum_t0_treatment = mrs_dists_cumsum.loc[dist_t0_treatment_str]
-dist_cumsum_no_effect = mrs_dists_cumsum.loc[dist_no_effect_str]
+    dist_cumsum_pre_stroke = mrs_dists_cumsum.loc[dist_pre_stroke_str].values
+    dist_cumsum_no_treatment = (
+        mrs_dists_cumsum.loc[dist_no_treatment_str].values)
+    dist_cumsum_t0_treatment = (
+        mrs_dists_cumsum.loc[dist_t0_treatment_str].values)
+    dist_cumsum_no_effect = mrs_dists_cumsum.loc[dist_no_effect_str].values
+except:
+    err_str = f'No data for {occlusion_str} and {treatment_str}.'
+    st.write(err_str)
+
+    # Provide some dummy data so the rest of the script runs: 
+    dist_dummy = np.array([np.NaN for i in range(7)])
+    dist_pre_stroke = dist_dummy
+    dist_no_treatment = dist_dummy
+    dist_t0_treatment = dist_dummy
+    dist_no_effect = dist_dummy
+
+    dist_cumsum_pre_stroke = dist_dummy
+    dist_cumsum_no_treatment = dist_dummy
+    dist_cumsum_t0_treatment = dist_dummy
+    dist_cumsum_no_effect = dist_dummy
 
 
 # ----- Find probability with time -----
@@ -106,6 +127,18 @@ a_list, b_list, A_list = find_mrs_constants(
 # The probability P at an arbitrary treatment time is: 
 # P(treatment_time) = 1.0/(1.0 + np.exp(-A -b*treatment_time)) 
 # where the values of a, b, and A are different for each mRS. 
+
+
+# ----- Find distribution at chosen treatment time -----
+# Calculate the cumulative probability bins at the chosen time: 
+dist_cumsum_time_input_treatment = (
+    find_mrs_bins_t(A_list, b_list, time_input))
+# Append the value for mRS=6:
+dist_cumsum_time_input_treatment = (
+    np.append(dist_cumsum_time_input_treatment, 1.0))
+# Make the non-cumulative bins: 
+dist_time_input_treatment = (
+    np.diff(dist_cumsum_time_input_treatment, prepend=0.0))
 
 
 # --- Plot probability with time -----
@@ -130,3 +163,46 @@ for prob in probs_to_mark:
     ax.axhline(prob, color='w', linestyle='-')
 
 st.pyplot(fig)
+
+
+# ----- Show data frame -----
+# Set up headings for the rows and columns: 
+headings_rows = [
+    'Pre-stroke',
+    'Treatment at 0 hours',
+    f'Treatment at {time_input//60} hours {time_input%60} minutes',
+    f'Treatment at {time_no_effect//60} hours {time_no_effect%60} minutes',
+    'Untreated'
+]
+headings_cols_cumsum = [f'mRS<={i}' for i in range(7)]
+headings_cols_bins = [f'mRS={i}' for i in range(7)]
+
+# Gather the data to display: 
+dists_cumsum = [
+    dist_cumsum_pre_stroke, 
+    dist_cumsum_t0_treatment, 
+    dist_cumsum_time_input_treatment,
+    dist_cumsum_no_effect, 
+    dist_cumsum_no_treatment
+    ]  
+dists_bins = [
+    dist_pre_stroke, 
+    dist_t0_treatment, 
+    dist_time_input_treatment,
+    dist_no_effect, 
+    dist_no_treatment
+    ]  
+
+# Build data frames: 
+df_dists_cumsum = pd.DataFrame(dists_cumsum, 
+    index=headings_rows, columns=headings_cols_cumsum)
+df_dists_bins = pd.DataFrame(dists_bins, 
+    index=headings_rows, columns=headings_cols_bins)
+
+# If box is ticked, display the tables: 
+if st.checkbox('Show data tables'):
+    st.write('Probability bins:')
+    st.dataframe(df_dists_bins)
+
+    st.write('Cumulative probability bins:')
+    st.dataframe(df_dists_cumsum)
