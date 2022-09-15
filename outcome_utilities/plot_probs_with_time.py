@@ -39,10 +39,10 @@ def plot_probs_filled(A,b,times_mins, colour_list=[],
         # Store the most recently-created line for the next loop:
         p_j = p_i
 
-    ax.legend(loc='center left', bbox_to_anchor=[1.0,0.5,0.2,0.2], 
-        title='mRS')
+    ax.legend(loc='upper center', bbox_to_anchor=[0.5,-0.2], 
+        title='mRS', ncol=7)
     ax.set_ylabel('Probability')
-    ax.set_xlabel('Onset to treatment time (hours)')
+    ax.set_xlabel('\nOnset to treatment time (hours)')
 
     ax.set_ylim(0, 1)
     ax.set_xlim(times_hours[0],times_hours[-1])

@@ -15,6 +15,8 @@ from outcome_utilities.probs_with_time import \
     find_mrs_constants, find_mrs_bins_t
 from outcome_utilities.plot_probs_with_time import \
     plot_probs_filled
+from outcome_utilities.dist_plot import \
+    draw_horizontal_bar, draw_connections
 
 
 # ----- Fixed parameters ----- 
@@ -48,7 +50,7 @@ treatment_input = st.sidebar.radio(
     )
 
 mRS_input = st.sidebar.multiselect(
-    'Choose the pre-stroke mRS value(s).',
+    'Choose the pre-stroke mRS value(s) to highlight.',
     range(6)
     )
 
@@ -121,6 +123,15 @@ except:
     dist_cumsum_no_effect = dist_dummy
 
 
+# ----- Use mRS input to define highlight lines -----
+probs_to_mark = []
+for mRS in mRS_input:
+    prob_below = dist_cumsum_pre_stroke[mRS-1] if mRS>0 else 0.0 
+    prob_above = dist_cumsum_pre_stroke[mRS] if mRS<6 else 1.0 
+    probs_to_mark.append(prob_below)
+    probs_to_mark.append(prob_above)
+
+
 # ----- Find probability with time -----
 a_list, b_list, A_list = find_mrs_constants(
     dist_cumsum_t0_treatment, dist_cumsum_no_effect, time_no_effect)
@@ -143,26 +154,72 @@ dist_time_input_treatment = (
 
 # --- Plot probability with time -----
 times_to_plot = np.linspace(0, time_no_effect, 20)
-probs_to_mark = []
-for mRS in mRS_input:
-    prob_below = dist_cumsum_pre_stroke[mRS-1] if mRS>0 else 0.0 
-    prob_above = dist_cumsum_pre_stroke[mRS] if mRS<6 else 1.0 
-    probs_to_mark.append(prob_below)
-    probs_to_mark.append(prob_above)
 
-fig, ax = plt.subplots()
+fig_probs_time, ax_probs_time = plt.subplots()
 # probs_time_plot_title = (f'Treating {occlusion_str} with {treatment_str}' +
 #     f'\nat treatment time {time_input} minutes')
 plot_probs_filled(A_list, b_list, times_to_plot, colour_list, 
     # probs_to_mark=np.unique(probs_to_mark), 
-    ax=ax)
+    ax=ax_probs_time)
 
-ax.axvline(time_input/60.0, color='w', linestyle='--')
+ax_probs_time.axvline(time_input/60.0, color='w', linestyle='--')
+ax_probs_time.annotate('|',
+    xy=(time_input/60.0, 0.0), va='top', ha='center', color='r',
+    fontsize=20, zorder=0
+    )
+ax_probs_time.annotate('\n\nTreatment',
+    xy=(time_input/60.0, 0.0), va='top', ha='center', color='r'
+    )
 
 for prob in probs_to_mark:
-    ax.axhline(prob, color='w', linestyle='-')
+    ax_probs_time.axhline(prob, color='w', linestyle='-')
 
-st.pyplot(fig)
+st.pyplot(fig_probs_time)
+
+
+# ----- Plot probability distributions ----- 
+fig_bars, ax_bars = plt.subplots(gridspec_kw={'left':0.1, 'right':0.9}) 
+
+y_list = [2, 1, 0]
+y_labels = [
+    'Pre-stroke', 
+    (f'Treated with {treatment_str} at '+'\n'
+    + f'{time_input//60} hours '
+    + f'{time_input%60:02d} minutes'),
+    'No treatment'
+    ]
+# ^ keep formatting for e.g. 01 minutes in the middle bar 
+# otherwise the axis jumps about as the label changes size
+# between "9 minutes" and "10 minutes" (extra character). 
+
+dists_to_bar = [
+    dist_pre_stroke, 
+    dist_time_input_treatment,
+    dist_no_treatment
+    ]
+for i, dist in enumerate(dists_to_bar):
+    draw_horizontal_bar(dist, y=y_list[i], 
+        colour_list=colour_list,# bar_height=0.5,
+        ax=ax_bars)
+
+for prob in probs_to_mark:
+    ax_bars.axvline(prob, color='k')
+
+ax_bars.set_yticks(y_list)
+ax_bars.set_yticklabels(y_labels)
+
+ax_bars.set_xlabel('Probability')
+ax_bars.set_xticks(np.arange(0,1.01,0.2))
+ax_bars.set_xticks(np.arange(0,1.01,0.05), minor=True)
+# Extend xlims slightly to not cut off bar border colour. 
+ax_bars.set_xlim(-5e-3, 1.0+5e-3)
+# ax_bars.tick_params(top=True, bottom=True, which='both')
+
+# Remove sides of the frame:
+for spine in ['left', 'right', 'top']:
+    ax_bars.spines[spine].set_color(None)
+
+st.pyplot(fig_bars)
 
 
 # ----- Show data frame -----
@@ -173,7 +230,7 @@ headings_rows = [
     f'Treatment at {time_input//60} hours {time_input%60} minutes',
     f'Treatment at {time_no_effect//60} hours {time_no_effect%60} minutes',
     'Untreated'
-]
+    ]
 headings_cols_cumsum = [f'mRS<={i}' for i in range(7)]
 headings_cols_bins = [f'mRS={i}' for i in range(7)]
 
