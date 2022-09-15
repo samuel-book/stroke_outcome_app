@@ -3,12 +3,15 @@ Streamlit app for the stroke outcome model.
 """
 
 # ----- Imports -----
+from re import A
 import numpy as np
 import matplotlib.pyplot as plt 
 import streamlit as st
 
 # For handling the mRS dist files: 
 import pandas as pd 
+# For highlighting text:
+import matplotlib.patheffects as path_effects
 
 # Custom functions:
 from outcome_utilities.probs_with_time import \
@@ -180,6 +183,7 @@ st.pyplot(fig_probs_time)
 # ----- Plot probability distributions ----- 
 fig_bars, ax_bars = plt.subplots(gridspec_kw={'left':0.1, 'right':0.9}) 
 
+bar_height = 0.5
 y_list = [2, 1, 0]
 y_labels = [
     'Pre-stroke', 
@@ -197,13 +201,70 @@ dists_to_bar = [
     dist_time_input_treatment,
     dist_no_treatment
     ]
+dists_cumsum_to_bar = [
+    dist_cumsum_pre_stroke, 
+    dist_cumsum_time_input_treatment,
+    dist_cumsum_no_treatment
+    ]
 for i, dist in enumerate(dists_to_bar):
     draw_horizontal_bar(dist, y=y_list[i], 
-        colour_list=colour_list,# bar_height=0.5,
+        colour_list=colour_list, bar_height=0.5,
         ax=ax_bars)
 
+# Vertical lines for input mRS (pre-stroke) highlights
 for prob in probs_to_mark:
-    ax_bars.axvline(prob, color='k')
+    ax_bars.axvline(prob, color='grey', linestyle='--', zorder=0)
+
+# Within highlighted area, annotate the bar sizes. 
+for mRS in mRS_input:
+    pre_stroke_bin_size = dist_pre_stroke[mRS]
+    pre_stroke_bin_left = dist_cumsum_pre_stroke[mRS-1] if mRS>0 else 0.0
+    pre_stroke_bin_right = dist_cumsum_pre_stroke[mRS] if mRS<5 else 1.0
+
+    # Annotate the pre-stroke mRS value:
+    pre_stroke_bin_mid = np.mean([pre_stroke_bin_left, pre_stroke_bin_right])
+    ax_bars.annotate(f'mRS\n{mRS}', 
+        xy=(pre_stroke_bin_mid, y_list[0]+0.5*bar_height),
+        color=colour_list[mRS], 
+        ha='center', va='bottom')
+
+    for i in [1,2]:
+        dist = dists_to_bar[i]
+        dist_cumsum = dists_cumsum_to_bar[i]
+        y_bar = y_list[i]
+
+        # Find which mRS bins here are within the highlight: 
+        bin_smallest = np.where(dist_cumsum>=pre_stroke_bin_left)[0][0]
+        bin_largest = np.where(dist_cumsum>=pre_stroke_bin_right)[0][0]
+
+        for mRS_bin in range(bin_smallest, bin_largest+1, 1):
+            bin_size = dist[mRS_bin]
+            if mRS_bin==bin_smallest:
+                bin_size -= pre_stroke_bin_left
+                bin_left = pre_stroke_bin_left
+            else:
+                bin_left = dist_cumsum[mRS_bin-1] if mRS_bin>0 else 0.0
+            if mRS_bin==bin_largest:
+                bin_size = pre_stroke_bin_right-bin_size 
+                bin_right = pre_stroke_bin_right
+            else:
+                bin_right = dist_cumsum[mRS_bin]
+            # Central coordinate:
+            bin_mid = np.mean([bin_left, bin_right])
+
+            # Find size ratio of this bin to the highlight:
+            size_ratio = (bin_right-bin_left)/pre_stroke_bin_size 
+
+            # Annotate the size label: 
+            text = ax_bars.annotate(f'{size_ratio*100:2.0f}%',
+                xy=(bin_mid, y_bar+bar_height*0.6),
+                ha='center', va='bottom', color=colour_list[mRS],
+                fontsize=8)
+            # Add white outline:
+            text.set_path_effects([
+                path_effects.Stroke(linewidth=3, foreground='w'),
+                path_effects.Normal()])
+
 
 ax_bars.set_yticks(y_list)
 ax_bars.set_yticklabels(y_labels)
