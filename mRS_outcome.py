@@ -3,7 +3,6 @@ Streamlit app for the stroke outcome model.
 """
 
 # ----- Imports -----
-from re import A
 import numpy as np
 import matplotlib.pyplot as plt 
 import streamlit as st
