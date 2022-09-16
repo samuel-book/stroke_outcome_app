@@ -4,13 +4,14 @@ Streamlit app for the stroke outcome model.
 
 # ----- Imports -----
 import numpy as np
-import matplotlib.pyplot as plt 
 import streamlit as st
+import matplotlib # Testing 
+import matplotlib.pyplot as plt 
 
 # For handling the mRS dist files: 
 import pandas as pd 
-# For highlighting text:
-import matplotlib.patheffects as path_effects
+# # For highlighting text:
+# import matplotlib.patheffects as path_effects
 
 # Custom functions:
 from outcome_utilities.probs_with_time import \
