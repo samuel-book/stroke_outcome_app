@@ -3,18 +3,13 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - future=0.18.2=py38_1
-  - markupsafe=2.1.1=py38h7f8727e_0
-  - matplotlib=3.4.3=py38h06a4308_0
-  - matplotlib-base=3.4.3=py38hbbc1b5f_0
+  - matplotlib=3.4.3
   - numpy=1.22.3=py38he7a7128_0
-  - numpy-base=1.22.3=py38hf524024_0
   - pandas=1.4.2=py38h295c915_0
   - python=3.8.13=h12debd9_0
   - scipy=1.7.3=py38hc147768_0
   - pip:
     - markdown==3.3.7
     - pip==22.2.2
-    - pyyaml==6.0
     - streamlit==1.12.2
 prefix: /home/anna/miniconda3/envs/samuel2_app
