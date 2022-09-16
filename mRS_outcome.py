@@ -25,6 +25,15 @@ from outcome_utilities.bar_sizes import \
 from outcome_utilities.added_utility_between_dists import \
     find_added_utility_between_dists
 
+# Set page to widescreen:
+# (must be first call to st)
+st.set_page_config(layout='wide')
+
+# 
+st.title('Stroke outcome modelling')
+st.header('How to use this')
+st.write('select stuff on the left sidebar')
+# st.subheader('test')
 
 # ----- Fixed parameters ----- 
 # Define maximum treatment times:
@@ -42,6 +51,8 @@ colour_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colour_list = colour_list[:7-1]
 # Add grey for mRS=6 bin:
 colour_list.append('DarkSlateGray')
+# Change to array for easier indexing later:
+colour_list = np.array(colour_list)
 
 
 # ----- User-selected variables -----
@@ -59,11 +70,11 @@ treatment_input = st.sidebar.radio(
     # 'Both IVT and MT']
     )
 
-mRS_input = st.sidebar.multiselect(
-    'Choose the pre-stroke mRS value(s) to highlight.',
-    range(6)
-    )
-mRS_input = np.sort(mRS_input)
+# mRS_input = st.sidebar.multiselect(
+#     'Choose the pre-stroke mRS value(s) to highlight.',
+#     range(6)
+#     )
+# mRS_input = np.sort(mRS_input)
 
 # if any('MT' in treatment for treatment in treatment_input): 
 time_no_effect = (time_no_effect_mt if 'MT' in treatment_input 
@@ -81,9 +92,9 @@ occlusion_str = 'nlvo' if 'nLVO' in occlusion_input else 'lvo'
 treatment_str = 'mt' if 'MT' in treatment_input else 'ivt'
 excess_death_str = '_'+treatment_str+'_deaths' 
 
-title = (f'Treating {occlusion_str} with {treatment_str}' +
-    f'\nat treatment time {time_input//60} hours {time_input%60} minutes')
-st.write('__'+title+'__')
+title = (f'Treating {occlusion_str} with {treatment_str.upper()} ' +
+    f'at treatment time {time_input//60} hours {time_input%60} minutes')
+st.header(title)
 
 
 # ----- Select the mRS data -----
@@ -118,29 +129,19 @@ try:
         mrs_dists_cumsum.loc[dist_t0_treatment_str].values)
     dist_cumsum_no_effect = mrs_dists_cumsum.loc[dist_no_effect_str].values
 except:
-    err_str = f'No data for {occlusion_str} and {treatment_str}.'
-    st.write(err_str)
-
-    # Provide some dummy data so the rest of the script runs: 
-    dist_dummy = np.array([np.NaN for i in range(7)])
-    dist_pre_stroke = dist_dummy
-    dist_no_treatment = dist_dummy
-    dist_t0_treatment = dist_dummy
-    dist_no_effect = dist_dummy
-
-    dist_cumsum_pre_stroke = dist_dummy
-    dist_cumsum_no_treatment = dist_dummy
-    dist_cumsum_t0_treatment = dist_dummy
-    dist_cumsum_no_effect = dist_dummy
+    err_str = f'No data for {occlusion_str} and {treatment_str.upper()}.'
+    st.warning(err_str)
+    st.stop()
 
 
-# ----- Use mRS input to define highlight lines -----
-probs_to_mark = []
-for mRS in mRS_input:
-    prob_below = dist_cumsum_pre_stroke[mRS-1] if mRS>0 else 0.0 
-    prob_above = dist_cumsum_pre_stroke[mRS] if mRS<6 else 1.0 
-    probs_to_mark.append(prob_below)
-    probs_to_mark.append(prob_above)
+
+# # ----- Use mRS input to define highlight lines -----
+# probs_to_mark = []
+# for mRS in mRS_input:
+#     prob_below = dist_cumsum_pre_stroke[mRS-1] if mRS>0 else 0.0 
+#     prob_above = dist_cumsum_pre_stroke[mRS] if mRS<6 else 1.0 
+#     probs_to_mark.append(prob_below)
+#     probs_to_mark.append(prob_above)
 
 
 # ----- Find probability with time -----
@@ -163,11 +164,39 @@ dist_time_input_treatment = (
     np.diff(dist_cumsum_time_input_treatment, prepend=0.0))
 
 
+# ----- Add legend -----
+
+# Make dummy columns to force legend to be smaller:
+leg_cols = st.columns(3)
+
+fig_legend = plt.figure(figsize=(6,2))
+
+# Dummy data for legend:
+dummies = []
+for i in range(7):
+    dummy = plt.bar(np.NaN, np.NaN, color=colour_list[i], edgecolor='k')
+    dummies.append(dummy)
+
+# Clear to remove automatic blank axis: 
+fig_legend.clear()
+# Draw legend using dummy bars: 
+fig_legend.legend([*dummies], range(7), 
+            loc='center',ncol=7, title='mRS colour scheme', 
+            ) 
+leg_cols[1].pyplot(fig_legend)
+
+
+# -----
+# Put the two big plots in columns: 
+plot_col1, plot_col2 = st.columns(2)
+
 # --- Plot probability with time -----
-st.write('Probability distribution with time:')
+plot_col1.subheader('Probability changes with time')
 times_to_plot = np.linspace(0, time_no_effect, 20)
 
-fig_probs_time, ax_probs_time = plt.subplots()
+
+# figsize is fudged to make it approx. same height as other plot
+fig_probs_time, ax_probs_time = plt.subplots(figsize=(8,7.3))
 # probs_time_plot_title = (f'Treating {occlusion_str} with {treatment_str}' +
 #     f'\nat treatment time {time_input} minutes')
 plot_probs_filled(A_list, b_list, times_to_plot, colour_list, 
@@ -182,19 +211,23 @@ ax_probs_time.annotate('|',
 ax_probs_time.annotate('\n\nTreatment',
     xy=(time_input/60.0, 0.0), va='top', ha='center', color='r'
     )
+# Secret annotation to make sure axis doesn't resize when time input
+# is equal to max time:
+ax_probs_time.annotate('Treatment',
+    xy=(time_no_effect/60.0, 0.0), va='top', ha='center', color='None'
+    )
 
-st.pyplot(fig_probs_time)
+plot_col1.pyplot(fig_probs_time)
 
 
 # ----- Plot probability distributions ----- 
-st.write('Compare the probability distribution at this treatment time:')
-fig_bars, ax_bars = plt.subplots(gridspec_kw={'left':0.1, 'right':0.9}) 
+plot_col2.subheader('The effect of treatment on mRS')
 
 bar_height = 0.5
 y_list = [2, 1, 0]
 y_labels = [
     'Pre-stroke', 
-    (f'Treated with {treatment_str} at '+'\n'
+    (f'Treated with {treatment_str.upper()} at '+'\n'
     + f'{time_input//60} hours '
     + f'{time_input%60:02d} minutes'),
     'No treatment'
@@ -213,40 +246,7 @@ dists_cumsum_to_bar = [
     dist_cumsum_time_input_treatment,
     dist_cumsum_no_treatment
     ]
-for i, dist in enumerate(dists_to_bar):
-    draw_horizontal_bar(dist, y=y_list[i], 
-        colour_list=colour_list, bar_height=0.5,
-        ax=ax_bars)
 
-# Vertical lines for input mRS (pre-stroke) highlights
-# for prob in probs_to_mark:
-for prob in np.append([0.0], dist_cumsum_pre_stroke):
-    ax_bars.axvline(prob, color='grey', linestyle='--', zorder=0)
-
-# # Within highlighted area, annotate the bar sizes. 
-# for mRS in mRS_input:
-#     pre_stroke_bin_size = dist_pre_stroke[mRS]
-#     pre_stroke_bin_left = dist_cumsum_pre_stroke[mRS-1] if mRS>0 else 0.0
-#     pre_stroke_bin_right = dist_cumsum_pre_stroke[mRS] if mRS<5 else 1.0
-
-#     # Annotate the pre-stroke mRS value:
-#     pre_stroke_bin_mid = np.mean([pre_stroke_bin_left, pre_stroke_bin_right])
-#     ax_bars.annotate(f'mRS\n{mRS}', 
-#         xy=(pre_stroke_bin_mid, y_list[0]+0.5*bar_height),
-#         color=colour_list[mRS], 
-#         ha='center', va='bottom')
-
-#     # Find which mRS bins here are within the highlight: 
-#     # Middle bar:
-#     time_input_bin_smallest = np.where(
-#         dist_cumsum_time_input_treatment>=pre_stroke_bin_left)[0][0]
-#     time_input_bin_largest = np.where(
-#         dist_cumsum_time_input_treatment>=pre_stroke_bin_right)[0][0]
-#     # Bottom bar:
-#     no_treatment_bin_smallest = np.where(
-#         dist_cumsum_no_treatment>=pre_stroke_bin_left)[0][0]
-#     no_treatment_bin_largest = np.where(
-#         dist_cumsum_no_treatment>=pre_stroke_bin_right)[0][0]
 
 
 (mRS_dist_mix, weighted_added_utils, mRS_list_time_input_treatment, 
@@ -255,97 +255,157 @@ for prob in np.append([0.0], dist_cumsum_pre_stroke):
     utility_weights
 )
 
-st.write(mRS_dist_mix)
-st.write(weighted_added_utils)
+fig_bars_change, axs = plt.subplots(2, 1, figsize=(8,8))
+ax_bars = axs[0] 
+ax_util_change = axs[1]
 
-y_a = y_list[1]-bar_height*0.5
-y_b = y_list[2]+bar_height*0.5
-y_mid = np.mean([y_list[1], y_list[2]])
-for i in range(len(mRS_list_time_input_treatment)):
-    mRS_a = mRS_list_time_input_treatment[i]
-    mRS_b = mRS_list_no_treatment[i]
-    # p_a = dist_cumsum_time_input_treatment[mRS_a]
-    # p_a2 = dist_cumsum_time_input_treatment[mRS_a-1]
-    # p_b = dist_cumsum_no_treatment[mRS_b]
-    # p_b = dist_cumsum_no_treatment[mRS_b-1]
-    p_a = mRS_dist_mix[i] 
-    p_b = mRS_dist_mix[i-1] if i>0 else 0.0
-    if mRS_a!=mRS_b:
-        # ax_bars.vlines(mRS_dist_mix[i], 
-        #     y_list[1]+bar_height*0.5,
-        #     y_list[2]-bar_height*0.5, 
-        #     color='LimeGreen', zorder=0)
-        ax_bars.fill(
-            [p_a,p_a,p_b,p_b],
-            [y_mid,y_b,y_b,y_mid],
-            color=colour_list[mRS_b],#'Gainsboro', 
-            # edgecolor=colour_list[mRS_a],#'grey',
-            # hatch='---',
-            edgecolor='None',
-            alpha=0.4,
-            zorder=0
-            )
-        ax_bars.fill(
-        [p_a,p_a,p_b,p_b],
-        [y_mid,y_a,y_a,y_mid],
-        color=colour_list[mRS_a],#'Gainsboro', 
-        # edgecolor=colour_list[mRS_a],#'grey',
-        # hatch='---',
-        edgecolor='None',
-        alpha=0.4,
-        zorder=0
-        )
-        ax_bars.vlines(p_a, y_a, y_b, color='k', linewidth=0.5)
-        ax_bars.vlines(p_b, y_a, y_b, color='k', linewidth=0.5)
 
+# # Vertical lines for input mRS (pre-stroke) highlights
+# for prob in np.append([0.0], dist_cumsum_pre_stroke):
+#     ax_bars.axvline(prob, color='grey', linestyle='--', zorder=0)
+
+if plot_col2.checkbox('Mark changes between treated and no treatment'):
+    top_of_bottom_bar = y_list[2]+bar_height*0.5
+    bottom_of_top_bar = y_list[1]-bar_height*0.5
+    for prob in mRS_dist_mix:
+        ax_bars.vlines(prob, bottom_of_top_bar, top_of_bottom_bar,
+            color='silver', linestyle='-', zorder=0)
+        ax_util_change.axvline(prob, color='silver', zorder=0)
+
+
+for i, dist in enumerate(dists_to_bar):
+    draw_horizontal_bar(dist, y=y_list[i], 
+        colour_list=colour_list, bar_height=0.5,
+        ax=ax_bars)
 
 ax_bars.set_yticks(y_list)
 ax_bars.set_yticklabels(y_labels)
 
-ax_bars.set_xlabel('Probability')
-ax_bars.set_xticks(np.arange(0,1.01,0.2))
-ax_bars.set_xticks(np.arange(0,1.01,0.05), minor=True)
 # Extend xlims slightly to not cut off bar border colour. 
-ax_bars.set_xlim(-5e-3, 1.0+5e-3)
+for ax in axs:
+    ax.set_xlim(-5e-3, 1.0+5e-3)
+    ax.set_xlabel('Probability')
+    ax.set_xticks(np.arange(0,1.01,0.2))
+    ax.set_xticks(np.arange(0,1.01,0.05), minor=True)
 # ax_bars.tick_params(top=True, bottom=True, which='both')
 
 # Remove sides of the frame:
 for spine in ['left', 'right', 'top']:
     ax_bars.spines[spine].set_color(None)
 
-st.pyplot(fig_bars)
+
+# Bottom subplot
+if occlusion_str=='nlvo':
+    ylim_util_change = [-0.02, 0.162] # nLVO IVT
+else:
+    if treatment_str=='mt':
+        ylim_util_change = [-0.05, 0.310] # LVO MT
+    else:
+        ylim_util_change = [-0.027, 0.062] # LVO IVT
+
+
+if plot_col2.checkbox('Add mRS colours to utility line'):
+    for i in range(1,len(mRS_dist_mix)):
+        y_offset = 0.05 * (ylim_util_change[1]-ylim_util_change[0])
+        ax_util_change.fill_between(
+            [mRS_dist_mix[i-1], mRS_dist_mix[i]], 
+            np.array([weighted_added_utils[i-1], weighted_added_utils[i]])+y_offset, 
+            np.array([weighted_added_utils[i-1], weighted_added_utils[i]]), 
+            color=colour_list[mRS_list_time_input_treatment[i]],
+            edgecolor='None',
+            # zorder=0,
+            )
+
+
+        ax_util_change.fill_between(
+            [mRS_dist_mix[i-1], mRS_dist_mix[i]], 
+            np.array([weighted_added_utils[i-1], weighted_added_utils[i]])-y_offset, 
+            np.array([weighted_added_utils[i-1], weighted_added_utils[i]]), 
+            color=colour_list[mRS_list_no_treatment[i]],
+            edgecolor='None',
+            # zorder=0,
+            )
+    write_text_about_utility_colours = 1
+else:
+    write_text_about_utility_colours = 0
+
+
+ax_util_change.plot(mRS_dist_mix, weighted_added_utils, color='k', 
+    label='Cumulative weighted added utility')
+
+ax_util_change.set_ylabel('Cumulative\nweighted added utility')
+ax_util_change.set_xlabel('Probability')
+ax_util_change.tick_params(top=True, right=True, which='both')
+
+ax_util_change.set_ylim(ylim_util_change)
+
+
+
+plot_col2.pyplot(fig_bars_change)
+
+plot_col2.write('When the value of "probability" lands in different mRS bins between the two distributions, the graph has a slope. When the mRS values are the same, the graph is flat.')
+if write_text_about_utility_colours>0:
+    plot_col2.write('On either side of the cumulative weighted added utility (the solid black line), the two mRS distributions are shown. Immediately above the line is the treated distribution, and immediately below is the "no treatment" distribution.')
+
 
 
 # ----- Show metric for +/- mRS and utility -----
 # Calculate mean mRSes:
-mean_mRS_no_treatment = np.mean(dist_no_treatment*np.arange(7))
-mean_mRS_time_input_treatment = np.mean(
+mean_mRS_pre_stroke = np.sum(
+    dist_pre_stroke*np.arange(7))
+mean_mRS_no_treatment = np.sum(dist_no_treatment*np.arange(7))
+mean_mRS_time_input_treatment = np.sum(
     dist_time_input_treatment*np.arange(7))
-mean_mRS_diff = mean_mRS_time_input_treatment - mean_mRS_no_treatment
+# Differences:
+mean_mRS_diff_no_treatment = (
+    mean_mRS_time_input_treatment - mean_mRS_no_treatment)
+mean_mRS_diff_pre_stroke = (
+    mean_mRS_time_input_treatment - mean_mRS_pre_stroke)
 
 # Calculate mean utilities: 
 # (it seems weird to use "sum" instead of "mean" but this definition 
 # matches the clinical outcome script)
+mean_utility_pre_stroke = np.sum(
+    dist_pre_stroke*utility_weights)
 mean_utility_no_treatment = np.sum(dist_no_treatment*utility_weights)
 mean_utility_time_input_treatment = np.sum(
     dist_time_input_treatment*utility_weights)
-mean_utility_diff = (
+# Differences:
+mean_utility_diff_no_treatment = (
     mean_utility_time_input_treatment - mean_utility_no_treatment)
+mean_utility_diff_pre_stroke = (
+    mean_utility_time_input_treatment - mean_utility_pre_stroke)
+
+st.subheader('Change in mRS and utility')
 
 # Put the two metrics in columns: 
-col1, col2 = st.columns(2)
-col1.metric('Population mean mRS', 
-    f'{mean_mRS_time_input_treatment:0.3f}', 
-    f'{mean_mRS_diff:0.3f} from "no treatment"',
+met_col1, met_col2 = st.columns(2)
+
+# mRS:
+met_col1.metric('Population mean mRS', 
+    f'{mean_mRS_time_input_treatment:0.2f}', 
+    f'{mean_mRS_diff_no_treatment:0.2f} from "no treatment"',
     delta_color='inverse' # A negative difference is good.
     )
-col2.metric('Population mean utility', 
+met_col1.metric('',#'Population mean mRS', 
+    '',#f'{mean_mRS_time_input_treatment:0.2f}', 
+    f'{mean_mRS_diff_pre_stroke:0.2f} from "pre-stroke"',
+    delta_color='inverse' # A negative difference is good.
+    )
+
+# Utility: 
+met_col2.metric('Population mean utility', 
     f'{mean_utility_time_input_treatment:0.3f}', 
-    f'{mean_utility_diff:0.3f} from "no treatment"',
+    f'{mean_utility_diff_no_treatment:0.3f} from "no treatment"',
+    )
+met_col2.metric('',#'Population mean utility', 
+    '',#f'{mean_utility_time_input_treatment:0.3f}', 
+    f'{mean_utility_diff_pre_stroke:0.3f} from "pre-stroke"',
     )
 
 
 # ----- Show data frame -----
+st.subheader('mRS data tables')
 # Set up headings for the rows and columns: 
 headings_rows = [
     'Pre-stroke',
@@ -380,7 +440,8 @@ df_dists_bins = pd.DataFrame(dists_bins,
     index=headings_rows, columns=headings_cols_bins)
 
 # If box is ticked, display the tables: 
-if st.checkbox('Show data tables'):
+dataframe_expander = st.expander('Show data tables')
+with dataframe_expander:
     st.write('Probability bins:')
     st.dataframe(df_dists_bins)
 

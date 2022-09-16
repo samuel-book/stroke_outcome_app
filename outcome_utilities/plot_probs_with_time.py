@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import streamlit as st
 
 #@st.cache
+# @st.experimental_singleton
 def plot_probs_filled(A,b,times_mins, colour_list=[], 
     ax=None, title=''):
     if ax==None:
@@ -39,8 +40,8 @@ def plot_probs_filled(A,b,times_mins, colour_list=[],
         # Store the most recently-created line for the next loop:
         p_j = p_i
 
-    ax.legend(loc='upper center', bbox_to_anchor=[0.5,1.2], 
-        title='mRS', ncol=7)
+    # ax.legend(loc='upper center', bbox_to_anchor=[0.5,1.2], 
+    #     title='mRS', ncol=7)
     ax.set_ylabel('Probability')
     ax.set_xlabel('\nOnset to treatment time (hours)')
 
