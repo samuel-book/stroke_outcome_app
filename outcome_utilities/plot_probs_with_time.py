@@ -5,6 +5,7 @@ import streamlit as st
 #@st.cache
 # @st.experimental_singleton
 def plot_probs_filled(A,b,times_mins, colour_list=[], 
+    time_input=np.NaN, 
     ax=None, title=''):
     if ax==None:
         ax = plt.subplot()
@@ -39,6 +40,22 @@ def plot_probs_filled(A,b,times_mins, colour_list=[],
 
         # Store the most recently-created line for the next loop:
         p_j = p_i
+
+    if np.isnan(time_input)==False:
+        ax.axvline(time_input/60.0, color='k', linestyle=':')
+        ax.annotate('|',
+            xy=(time_input/60.0, 0.0), va='top', ha='center', color='r',
+            fontsize=20, zorder=0
+            )
+        ax.annotate('\n\nTreatment',
+            xy=(time_input/60.0, 0.0), va='top', ha='center', color='r'
+            )
+
+    # Secret annotation to make sure axis doesn't resize when time input
+    # is equal to max time:
+    ax.annotate('Treatment',
+        xy=(times_hours[-1], 0.0), va='top', ha='center', color='None'
+        )
 
     # ax.legend(loc='upper center', bbox_to_anchor=[0.5,1.2], 
     #     title='mRS', ncol=7)
