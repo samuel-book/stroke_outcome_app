@@ -150,12 +150,11 @@ def plot_utility_chart(ax_util_change, mRS_dist_mix, weighted_added_utils,
     ax_util_change.tick_params(top=True, right=True, which='both')
 
     ax_util_change.set_ylim(ylim_util_change)
+    return ylim_util_change
     
     
 def plot_bars(dists_to_bar, dists_cumsum_to_bar, ax_bars, treatment_str, 
-    time_input):
-    bar_height = 0.5
-    y_list = [2, 1, 0]
+    time_input, y_list, bar_height):
     y_labels = [
         'Pre-stroke', 
         (f'Treated with {treatment_str.upper()} at '+'\n'
@@ -395,13 +394,17 @@ fig_bars_change, axs = plt.subplots(2, 1, figsize=(8,8))
 ax_bars = axs[0] 
 ax_util_change = axs[1]
 
+
+bar_height = 0.5
+y_list = [2, 1, 0]
 plot_bars(
     [dist_pre_stroke, dist_time_input_treatment, dist_no_treatment], 
     [dist_cumsum_pre_stroke, dist_cumsum_time_input_treatment, 
         dist_cumsum_no_treatment], ax_bars, treatment_str, 
-    time_input)
-plot_utility_chart(ax_util_change, mRS_dist_mix, weighted_added_utils,
-    occlusion_str, treatment_str)
+    time_input, y_list, bar_height)
+ylim_util_change = (
+    plot_utility_chart(ax_util_change, mRS_dist_mix, weighted_added_utils,
+    occlusion_str, treatment_str) )
 
 
 if plot_col2.checkbox('Mark changes between treated and no treatment'):
