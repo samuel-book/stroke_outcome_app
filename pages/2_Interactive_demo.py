@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
 Streamlit app for the stroke outcome model. 
 """
@@ -22,9 +23,11 @@ from outcome_utilities.plot_dist import \
 from outcome_utilities.bar_sizes import \
     find_bin_size_ratios
 from outcome_utilities.added_utility_between_dists import \
-    find_added_utility_between_dists, calculate_mean_changes
+    find_added_utility_between_dists, calculate_mean_changes, \
+    calculate_combo_mean_changes, find_weighted_change
 from outcome_utilities.inputs import \
-    find_useful_dist_dict, inputs_patient_population, inputs_pathway
+    find_useful_dist_dict, inputs_patient_population, inputs_pathway, \
+    utility_weights
 
 
 # ----- Functions ----- 
@@ -132,63 +135,117 @@ def draw_mRS_colours_on_utility_chart(mRS_dist_mix, weighted_added_utils,
             )
 
 
-def plot_timeline(time_dict, ax=None, y=0):
-        if ax==None:
-            fig, ax = plt.subplots()
-        time_cumulative = 0.0
-        y_emoji_offset = 0.05
-        y_under_offset = -0.05
-        for time_key in time_dict.keys():
+def plot_timeline(time_dict, ax=None, y=0, emoji_dict={}):
+    label_dict = dict( 
+        onset = 'Onset',
+        onset_to_ambulance_arrival = 'Ambulance\narrives',
+        travel_to_ivt = 'Arrive at\nIVT\ncentre', 
+        travel_to_mt = 'Arrive at\nIVT+MT\ncentre', 
+        ivt_arrival_to_treatment = 'IVT',
+        transfer_additional_delay = 'Transfer\nbegins',
+        travel_ivt_to_mt = 'Arrive at\nIVT+MT\ncentre',
+        mt_arrival_to_treatment = 'MT',
+        )
+
+    if ax==None:
+        fig, ax = plt.subplots()
+    time_cumulative = 0.0
+    y_under_offset = -0.05
+    y_label_offset = 0.30
+    for time_key in time_dict.keys():
+        t_min = time_dict[time_key]
+        time_cumulative += t_min/60.0
+
+        if 'ivt_arrival_to_treatment' in time_key:
+            colour = 'b' 
+            write_under=True 
+        elif 'mt_arrival_to_treatment' in time_key:
+            colour = 'r'
+            write_under=True 
+        else:
+            colour = 'k'
+            write_under=False 
+
+        if time_dict[time_key]==0.0 and time_key!='onset':
+            x_plot = np.NaN 
+        else:
+            x_plot = time_cumulative
+        ax.scatter(x_plot, y, marker='|', s=200, color=colour)
+
+        ax.annotate(
+            label_dict[time_key], xy=(x_plot, y+y_label_offset), 
+            rotation=0, color=colour, ha='center', va='bottom')
+        if write_under: 
+            time_str = (f'{int(60*time_cumulative//60):2d}hr '+
+                        f'{int(60*time_cumulative%60):2d}min')
+            ax.annotate(
+                time_str, xy=(x_plot, y+y_under_offset), color=colour,
+                ha='center', va='top', rotation=20)
+    ax.plot([0, time_cumulative], [y,y], color='k', zorder=0)
+
+
+def plot_emoji_on_timeline(ax, emoji_dict, time_dict, y=0, aspect=1.0, xlim=[], ylim=[]):
+    """Do this after the timeline is drawn so sizing is consistent."""
+
+    y_emoji_offset = 0.15
+
+    y_span = ylim[1] - ylim[0]
+    y_size = 1.5*0.07*y_span #* aspect
+
+    x_span = xlim[1] - xlim[0]
+    x_size = 1.5*0.04*x_span #/ aspect
+
+    time_cumulative = 0.0 
+    for time_key in time_dict.keys():
+        if time_key in emoji_dict.keys(): 
             t_min = time_dict[time_key]
-            time_cumulative += t_min/60.0
-
-            if 'ivt_arrival_to_treatment' in time_key:
-                colour = 'b' 
-                write_under=True 
-            elif 'mt_arrival_to_treatment' in time_key:
-                colour = 'r'
-                write_under=True 
-            else:
-                colour = 'k'
-                write_under=False 
-
+            time_cumulative += t_min/60.0           
             if time_dict[time_key]==0.0 and time_key!='onset':
                 x_plot = np.NaN 
             else:
                 x_plot = time_cumulative
-            ax.scatter(x_plot, y, marker='|', s=200, color=colour)
+                
+                emoji = emoji_dict[time_key].strip(':')
+                # Import from file 
+                emoji_image = plt.imread('./emoji/'+emoji+'.png')
+                ext_xmin = x_plot - x_size*0.5 
+                ext_xmax = x_plot + x_size*0.5 
+                ext_ymin = y+y_emoji_offset - y_size*0.5 
+                ext_ymax = y+y_emoji_offset + y_size*0.5 
+                ax.imshow(emoji_image, 
+                          extent=[ext_xmin, ext_xmax, ext_ymin, ext_ymax])
+        # ax.annotate(emoji_dict[time_key], xy=(time_cumulative, y+y_emoji_offset))
 
-            ax.annotate(
-                time_key, xy=(x_plot, y+y_emoji_offset), 
-                rotation=50, color=colour)
-            if write_under: 
-                time_str = (f'{int(60*time_cumulative//60):2d}hr '+
-                            f'{int(60*time_cumulative%60):2d}min')
-                ax.annotate(
-                    time_str, xy=(x_plot, y+y_under_offset), color=colour,
-                    ha='center', va='top')
-            # ax.annotate(emoji_dict[time_key], xy=(time_cumulative, y+y_emoji_offset))
-        ax.plot([0, time_cumulative], [y,y], color='k', zorder=0)
 
-def make_timeline_plot(ax, time_dicts):
+def make_timeline_plot(ax, time_dicts, emoji_dict={}):
     
-    y_step = 0.5
+    y_step = 1.0
     y_vals = np.arange(0.0, y_step*len(time_dicts), y_step)[::-1]
     for i, time_dict in enumerate(time_dicts):
-        plot_timeline(time_dict, ax, y=y_vals[i])
-
+        plot_timeline(time_dict, ax, y=y_vals[i], emoji_dict=emoji_dict)
+    
     xlim = ax.get_xlim()
-    ax.set_xticks(np.arange(0, xlim[1], (10/60)), minor=True)
+    ax.set_xticks(np.arange(0, xlim[1], (1+(xlim[1]//6))*(10/60)), minor=True)
     ax.set_xlabel('Time since onset (hours)')
 
-    ax.set_ylim(-0.1, y_step*len(time_dicts))
+    ax.set_ylim(-0.25, y_step*(len(time_dicts)-0.2))
+    ylim = ax.get_ylim()
     ax.set_yticks(y_vals)
     ax.set_yticklabels(
         [f'Case {i+1}' for i in range(len(time_dicts))], fontsize=14)
+
+    aspect = 1.0/(ax.get_data_ratio()*2)
+    ax.set_aspect(aspect)
+    for i, time_dict in enumerate(time_dicts):
+        plot_emoji_on_timeline(ax, emoji_dict, time_dict, y=y_vals[i], 
+                               aspect=aspect, xlim=xlim, ylim=ylim)
+
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    ax.set_aspect(aspect)
+
     for spine in ['top', 'left', 'right']:
         ax.spines[spine].set_color('w')
-
-
 
 
 
@@ -208,6 +265,7 @@ def do_probs_with_time(
         treatment_times, treatment_labels,
         ax=ax_probs_time, xmax=time_no_effect_mt/60)
     st.pyplot(fig_probs_time)
+
 
 def do_prob_bars( 
         dist_pre_stroke, dist_time_input_treatment, 
@@ -292,12 +350,12 @@ colour_list = make_colour_list()
 
 # Define some emoji for various situations:
 emoji_dict = dict( 
-    onset = ':thumbsdown:',
+    # onset = ':thumbsdown:',
     onset_to_ambulance_arrival = ':ambulance:',
     travel_to_ivt = ':hospital:', 
     travel_to_mt = ':hospital:', 
     ivt_arrival_to_treatment = ':pill:',
-    transfer_additional_delay = ':hourglass:',
+    transfer_additional_delay = ':ambulance:',#':hourglass_flowing_sand:',
     travel_ivt_to_mt = ':hospital:',
     mt_arrival_to_treatment = ':syringe:',
 )
@@ -327,7 +385,7 @@ prop_dict = inputs_patient_population()
 
 # ----- Timeline of patient pathway -----
 st.header('Patient pathway')
-st.write('Give all times in minutes. :ambulance:')
+st.write('Times in minutes for each step:')
 (case1_time_dict, case2_time_dict, case1_time_to_ivt, 
  case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = inputs_pathway()
 
@@ -349,8 +407,8 @@ st.write('__Case 2:__ all patients are transported directly to the IVT+MT centre
 #          f'{case2_time_to_mt%60} minutes.')
 
 # Draw timelines 
-fig, ax = plt.subplots()
-make_timeline_plot(ax, [case1_time_dict, case2_time_dict])
+fig, ax = plt.subplots(figsize=(12,8))
+make_timeline_plot(ax, [case1_time_dict, case2_time_dict], emoji_dict)
 st.pyplot(fig) 
 
 
@@ -469,14 +527,14 @@ mean_mRS_dict_nlvo_ivt_case1, mean_util_dict_nlvo_ivt_case1 = \
         nlvo_ivt_case1_dict['dist_pre_stroke'], 
         nlvo_ivt_case1_dict['dist_no_treatment'], 
         nlvo_ivt_case1_dict['dist_time_input_treatment'], 
-        nlvo_ivt_case1_dict['utility_weights']
+        utility_weights
         )
 mean_mRS_dict_nlvo_ivt_case2, mean_util_dict_nlvo_ivt_case2 = \
     calculate_mean_changes(
         nlvo_ivt_case2_dict['dist_pre_stroke'], 
         nlvo_ivt_case2_dict['dist_no_treatment'], 
         nlvo_ivt_case2_dict['dist_time_input_treatment'], 
-        nlvo_ivt_case2_dict['utility_weights']
+        utility_weights
         )
 
 
@@ -485,14 +543,14 @@ mean_mRS_dict_lvo_ivt_case1, mean_util_dict_lvo_ivt_case1 = \
         lvo_ivt_case1_dict['dist_pre_stroke'], 
         lvo_ivt_case1_dict['dist_no_treatment'], 
         lvo_ivt_case1_dict['dist_time_input_treatment'], 
-        lvo_ivt_case1_dict['utility_weights']
+        utility_weights
         )
 mean_mRS_dict_lvo_ivt_case2, mean_util_dict_lvo_ivt_case2 = \
     calculate_mean_changes(
         lvo_ivt_case2_dict['dist_pre_stroke'], 
         lvo_ivt_case2_dict['dist_no_treatment'], 
         lvo_ivt_case2_dict['dist_time_input_treatment'], 
-        lvo_ivt_case2_dict['utility_weights']
+        utility_weights
         )
 
 
@@ -501,67 +559,82 @@ mean_mRS_dict_lvo_mt_case1, mean_util_dict_lvo_mt_case1 = \
         lvo_mt_case1_dict['dist_pre_stroke'], 
         lvo_mt_case1_dict['dist_no_treatment'], 
         lvo_mt_case1_dict['dist_time_input_treatment'], 
-        lvo_mt_case1_dict['utility_weights']
+        utility_weights
         )
 mean_mRS_dict_lvo_mt_case2, mean_util_dict_lvo_mt_case2 = \
     calculate_mean_changes(
         lvo_mt_case2_dict['dist_pre_stroke'], 
         lvo_mt_case2_dict['dist_no_treatment'], 
         lvo_mt_case2_dict['dist_time_input_treatment'], 
-        lvo_mt_case2_dict['utility_weights']
+        utility_weights
         )
 
+st.write(mean_mRS_dict_nlvo_ivt_case2['pre_stroke'])
+st.write(mean_mRS_dict_lvo_ivt_case2['pre_stroke'])
+st.write(mean_mRS_dict_lvo_mt_case2['pre_stroke'])
 
-mean_mRS_case1 = (
-    prop_dict['prop_lvo']*prop_dict['lvo_treated_ivt_only']*mean_mRS_dict_lvo_ivt_case1['time_input_treatment'] +
-    prop_dict['prop_lvo']*prop_dict['lvo_treated_ivt_only']*mean_mRS_dict_lvo_mt_case1['time_input_treatment'] +
-    prop_dict['prop_nlvo']*prop_dict['nlvo_treated_ivt_only']*mean_mRS_dict_nlvo_ivt_case1['time_input_treatment'] 
-)
 
-    prop_dict = dict(
-        nlvo = prop_nlvo,
-        lvo = prop_lvo,
-        ich = prop_ich,
-        nlvo_treated_ivt_only = prop_nlvo_treated_ivt_only,
-        lvo_treated_ivt_only = prop_lvo_treated_ivt_only,
-        lvo_treated_ivt_mt = prop_lvo_treated_ivt_mt,
-        ich_treated = prop_ich_treated,
-        lvo_mt_also_receiving_ivt = prop_lvo_mt_also_receiving_ivt,
-    )
+mean_mRS_change_case1 = find_weighted_change(
+    mean_mRS_dict_lvo_ivt_case1['diff_no_treatment'], 
+    mean_mRS_dict_lvo_mt_case1['diff_no_treatment'], 
+    mean_mRS_dict_nlvo_ivt_case1['diff_no_treatment'], 
+    prop_dict)
 
-    mean_util_dict = dict(
-        pre_stroke = mean_utility_pre_stroke,
-        no_treatment = mean_utility_no_treatment,
-        time_input_treatment = mean_utility_time_input_treatment,
-        diff_no_treatment = mean_utility_diff_no_treatment,
-        diff_pre_stroke = mean_utility_diff_pre_stroke
-    )
+mean_mRS_change_case2 = find_weighted_change(
+    mean_mRS_dict_lvo_ivt_case2['diff_no_treatment'], 
+    mean_mRS_dict_lvo_mt_case2['diff_no_treatment'], 
+    mean_mRS_dict_nlvo_ivt_case2['diff_no_treatment'], 
+    prop_dict)
+
+
+mean_util_change_case1 = find_weighted_change(
+    mean_util_dict_lvo_ivt_case1['diff_no_treatment'], 
+    mean_util_dict_lvo_mt_case1['diff_no_treatment'], 
+    mean_util_dict_nlvo_ivt_case1['diff_no_treatment'], 
+    prop_dict)
+
+mean_util_change_case2 = find_weighted_change(
+    mean_util_dict_lvo_ivt_case2['diff_no_treatment'], 
+    mean_util_dict_lvo_mt_case2['diff_no_treatment'], 
+    mean_util_dict_nlvo_ivt_case2['diff_no_treatment'], 
+    prop_dict)
+
+
+
+
 
 # ----- Show metric for +/- mRS and utility -----
 st.subheader('Change in mRS and utility')
+st.write('Change in mean mRS case1', mean_mRS_change_case1)
+st.write('Change in mean mRS case2', mean_mRS_change_case2)
 
-# Put the two metrics in columns: 
-met_col1, met_col2 = st.columns(2)
+st.write('Change in mean util case1', mean_util_change_case1)
+st.write('Change in mean util case2', mean_util_change_case2)
 
-# mRS:
-met_col1.metric('Population mean mRS', 
-    f'{mean_mRS_time_input_treatment:0.2f}', 
-    f'{mean_mRS_diff_no_treatment:0.2f} from "no treatment"',
-    delta_color='inverse' # A negative difference is good.
-    )
-met_col1.metric('',#'Population mean mRS', 
-    '',#f'{mean_mRS_time_input_treatment:0.2f}', 
-    f'{mean_mRS_diff_pre_stroke:0.2f} from "pre-stroke"',
-    delta_color='inverse' # A negative difference is good.
-    )
 
-# Utility: 
-met_col2.metric('Population mean utility', 
-    f'{mean_utility_time_input_treatment:0.3f}', 
-    f'{mean_utility_diff_no_treatment:0.3f} from "no treatment"',
-    )
-met_col2.metric('',#'Population mean utility', 
-    '',#f'{mean_utility_time_input_treatment:0.3f}', 
-    f'{mean_utility_diff_pre_stroke:0.3f} from "pre-stroke"',
-    )
+
+# # Put the two metrics in columns: 
+# met_col1, met_col2 = st.columns(2)
+
+# # mRS:
+# met_col1.metric('Population mean mRS', 
+#     f'{mean_mRS_time_input_treatment:0.2f}', 
+#     f'{mean_mRS_diff_no_treatment:0.2f} from "no treatment"',
+#     delta_color='inverse' # A negative difference is good.
+#     )
+# met_col1.metric('',#'Population mean mRS', 
+#     '',#f'{mean_mRS_time_input_treatment:0.2f}', 
+#     f'{mean_mRS_diff_pre_stroke:0.2f} from "pre-stroke"',
+#     delta_color='inverse' # A negative difference is good.
+#     )
+
+# # Utility: 
+# met_col2.metric('Population mean utility', 
+#     f'{mean_utility_time_input_treatment:0.3f}', 
+#     f'{mean_utility_diff_no_treatment:0.3f} from "no treatment"',
+#     )
+# met_col2.metric('',#'Population mean utility', 
+#     '',#f'{mean_utility_time_input_treatment:0.3f}', 
+#     f'{mean_utility_diff_pre_stroke:0.3f} from "pre-stroke"',
+#     )
 

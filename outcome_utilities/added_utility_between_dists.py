@@ -66,3 +66,99 @@ def find_added_utility_between_dists(mRS_dist1, mRS_dist2,
     weighted_added_utils = np.cumsum(added_utils * mRS_diff_mix)
     
     return mRS_dist_mix, weighted_added_utils, x1_list, x2_list
+
+
+def calculate_mean_changes(
+        dist_pre_stroke, dist_no_treatment, 
+        dist_time_input_treatment, utility_weights
+        ):
+    # ----- Calculate metrics -----
+    # Calculate mean mRSes:
+    mean_mRS_pre_stroke = np.sum(
+        dist_pre_stroke*np.arange(7))
+    mean_mRS_no_treatment = np.sum(dist_no_treatment*np.arange(7))
+    mean_mRS_time_input_treatment = np.sum(
+        dist_time_input_treatment*np.arange(7))
+    # Differences:
+    mean_mRS_diff_no_treatment = (
+        mean_mRS_time_input_treatment - mean_mRS_no_treatment)
+    mean_mRS_diff_pre_stroke = (
+        mean_mRS_time_input_treatment - mean_mRS_pre_stroke)
+    # Gather:
+    mean_mRS_dict = dict(
+        pre_stroke = mean_mRS_pre_stroke,
+        no_treatment = mean_mRS_no_treatment,
+        time_input_treatment = mean_mRS_time_input_treatment,
+        diff_no_treatment = mean_mRS_diff_no_treatment,
+        diff_pre_stroke = mean_mRS_diff_pre_stroke
+    )
+
+    # Calculate mean utilities: 
+    # (it seems weird to use "sum" instead of "mean" but this definition 
+    # matches the clinical outcome script)
+    mean_utility_pre_stroke = np.sum(
+        dist_pre_stroke*utility_weights)
+    mean_utility_no_treatment = np.sum(dist_no_treatment*utility_weights)
+    mean_utility_time_input_treatment = np.sum(
+        dist_time_input_treatment*utility_weights)
+    # Differences:
+    mean_utility_diff_no_treatment = (
+        mean_utility_time_input_treatment - mean_utility_no_treatment)
+    mean_utility_diff_pre_stroke = (
+        mean_utility_time_input_treatment - mean_utility_pre_stroke)
+    # Gather:
+    mean_util_dict = dict(
+        pre_stroke = mean_utility_pre_stroke,
+        no_treatment = mean_utility_no_treatment,
+        time_input_treatment = mean_utility_time_input_treatment,
+        diff_no_treatment = mean_utility_diff_no_treatment,
+        diff_pre_stroke = mean_utility_diff_pre_stroke
+    )
+
+    return mean_mRS_dict, mean_util_dict
+
+
+def calculate_combo_mean_changes(
+        prop_dict, change_dict_nlvo_ivt, change_dict_lvo_ivt, 
+        change_dict_lvo_mt, change_key):
+    p1 = prop_dict['lvo']*prop_dict['lvo_treated_ivt_only']
+    p2 = prop_dict['lvo']*prop_dict['lvo_treated_ivt_mt']
+    p3 = prop_dict['nlvo']*prop_dict['nlvo_treated_ivt_only']
+    mean_change = (
+        p1*change_dict_lvo_ivt[change_key] +
+        p2*change_dict_lvo_mt[change_key] +
+        p3*change_dict_nlvo_ivt[change_key] 
+    )
+    return mean_change 
+
+
+def find_weighted_change(change_lvo_ivt, change_lvo_mt, change_nlvo_ivt, 
+                         patient_props):
+    """
+    Take the total changes for each category and calculate their
+    weighted sum, where weights are from the proportions of the 
+    patient population.
+    
+    (originally from matrix notebook)
+    
+    Inputs:
+    
+    Returns:
+    
+    """
+    # If LVO-IVT is greater change than LVO-MT then adjust MT for 
+    # proportion of patients receiving IVT:
+    if change_lvo_ivt > change_lvo_mt:
+        diff = change_lvo_ivt - change_lvo_mt
+        change_lvo_mt += diff * patient_props['lvo_mt_also_receiving_ivt']
+
+    # Calculate weighted changes (wc):
+    wc_lvo_mt = (change_lvo_mt * 
+        patient_props['lvo'] * patient_props['lvo_treated_ivt_mt'])
+    wc_lvo_ivt = (change_lvo_ivt * 
+        patient_props['lvo'] * patient_props['lvo_treated_ivt_only'])
+    wc_nlvo_ivt = (change_nlvo_ivt *
+        patient_props['nlvo'] * patient_props['nlvo_treated_ivt_only'])
+        
+    total_change = wc_lvo_mt + wc_lvo_ivt + wc_nlvo_ivt
+    return total_change

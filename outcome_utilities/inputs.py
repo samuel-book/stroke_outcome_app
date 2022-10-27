@@ -14,32 +14,31 @@ def inputs_pathway():
     # All fixed times have units of minutes
     pathway_cols = st.columns(3)
     # Column 1 
-    pathway_cols[0].write(':ambulance:')
     onset_to_ambulance_arrival = pathway_cols[0].number_input(
-        label='Onset to ambulance arrival',
-        min_value=0, max_value=600, value=60)
+        label='🚑 Onset to ambulance arrival',
+        min_value=0, max_value=600, value=60, step=5)
+    transfer_additional_delay = pathway_cols[0].number_input(
+        label='🚑 Delay for transfer between centres',
+        min_value=0, max_value=600, value=60, step=5)
 
     # Column 2 
     travel_to_ivt = pathway_cols[1].number_input(
-        label='Travel time from onset location to IVT centre', 
-        min_value=0, max_value=600, value=30)
+        label='🏥 Travel time from onset location to IVT centre', 
+        min_value=0, max_value=600, value=30, step=5)
     travel_to_mt = pathway_cols[1].number_input(
-        label='Travel time from onset location to MT centre', 
-        min_value=0, max_value=600, value=50)
+        label='🏥 Travel time from onset location to MT centre', 
+        min_value=0, max_value=600, value=50, step=5)
     travel_ivt_to_mt = pathway_cols[1].number_input(
-        label='Travel time between IVT and MT centres', 
-        min_value=0, max_value=600, value=50)
+        label='🏥 Travel time between IVT and MT centres', 
+        min_value=0, max_value=600, value=50, step=5)
 
     # Column 3
     ivt_arrival_to_treatment = pathway_cols[2].number_input(
-        label='Delay between arrival at IVT centre and treatment', 
-        min_value=0, max_value=600, value=30)
+        label='💊 Delay between arrival at IVT centre and treatment', 
+        min_value=0, max_value=600, value=30, step=5)
     mt_arrival_to_treatment = pathway_cols[2].number_input(
-        label='Delay between arrival at MT centre and treatment', 
-        min_value=0, max_value=600, value=90)
-    transfer_additional_delay = pathway_cols[2].number_input(
-        label='Delay for transfer between IVT and MT centres',
-        min_value=0, max_value=600, value=60)
+        label='💉 Delay between arrival at MT centre and treatment', 
+        min_value=0, max_value=600, value=90, step=5)
     # ----- end of inputs ----- 
 
     case1_time_dict = dict(
@@ -93,20 +92,20 @@ def inputs_patient_population():
     with st.form(key='form_props'):
         st.write('Percentage of patients with each stroke type:')
         form_cols = st.columns(3) 
-        prop_nlvo = form_cols[0].number_input(
+        prop_nlvo = 0.01 * form_cols[0].number_input(
             label='nLVO', 
             min_value=0, max_value=100, value=65)
-        prop_lvo = form_cols[1].number_input(
+        prop_lvo = 0.01 * form_cols[1].number_input(
             label='LVO', 
             min_value=0, max_value=100, value=35)
-        prop_ich = form_cols[2].number_input(
+        prop_ich = 0.01 * form_cols[2].number_input(
             label='ICH', 
             min_value=0, max_value=100, value=0)
 
 
         # Sanity check - do the proportions sum to 100%? 
         sum_props = np.sum([prop_nlvo, prop_lvo, prop_ich])
-        if sum_props!=100:
+        if sum_props!=1:
             st.warning(':warning: Proportions should sum to 100%.')
 
         submit_button = st.form_submit_button(label='Submit')
@@ -115,28 +114,38 @@ def inputs_patient_population():
     # ----- Advanced options for patient proportions ----- 
     prop_expander = st.expander('Advanced options')
     with prop_expander:
+        st.write('Percentage of each stroke type given each treatment: ')
         with st.form(key='form_props_treatment'):
             # for i,col in enumerate(form_cols):
             #     col.write('-'*20)
             form_cols = st.columns(3) 
             # form_cols = st.columns(5) 
-            prop_nlvo_treated_ivt_only = form_cols[0].number_input(
-                label='% nLVO & IVT :syringe:', 
+            prop_nlvo_treated_ivt_only = 0.01 * form_cols[0].number_input(
+                label='💊 nLVO given IVT', 
                 min_value=0.0, max_value=100.0, value=15.5, step=0.1)
-            prop_lvo_treated_ivt_only = form_cols[1].number_input(
-                label='% LVO, to treat with IVT only', 
+            prop_lvo_treated_ivt_only = 0.01 * form_cols[1].number_input(
+                label='💊 LVO given IVT only', 
                 min_value=0.0, max_value=100.0, value=0.0, step=0.1)
-            prop_lvo_treated_ivt_mt = form_cols[1].number_input(
-                label='% LVO, to treat with IVT and MT :wrench:', 
+            prop_lvo_treated_ivt_mt = 0.01 * form_cols[1].number_input(
+                label='💉 LVO given MT', 
                 min_value=0.0, max_value=100.0, value=28.6, step=0.1)
-            prop_ich_treated = form_cols[2].number_input(
-                label='% ICH treated', 
+            prop_ich_treated = 0.01 * form_cols[2].number_input(
+                label='ICH treated', 
                 min_value=0.0, max_value=100.0, value=0.0, step=0.1)
-            prop_lvo_mt_also_receiving_ivt = form_cols[1].number_input(
-                label='% LVO MT patients who also receive IVT', 
+            prop_lvo_mt_also_receiving_ivt = 0.01 * form_cols[1].number_input(
+                label='💊💉 LVO MT patients who also receive IVT', 
                 min_value=0.0, max_value=100.0, value=85.0, step=0.1)
                 
             submit_button = st.form_submit_button(label='Submit')
+
+        treated_population = (
+            prop_nlvo * prop_nlvo_treated_ivt_only +
+            prop_lvo * prop_lvo_treated_ivt_mt +
+            prop_lvo * prop_lvo_treated_ivt_only
+            )
+        st.write('Percentage of the population receiving treatment: ',
+                 f'{treated_population:5.2f}')
+
 
     prop_dict = dict(
         nlvo = prop_nlvo,
@@ -147,6 +156,7 @@ def inputs_patient_population():
         lvo_treated_ivt_mt = prop_lvo_treated_ivt_mt,
         ich_treated = prop_ich_treated,
         lvo_mt_also_receiving_ivt = prop_lvo_mt_also_receiving_ivt,
+        treated_population = treated_population
     )
 
     return prop_dict 
