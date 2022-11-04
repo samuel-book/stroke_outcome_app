@@ -34,10 +34,10 @@ def inputs_pathway():
 
     # Column 3
     ivt_arrival_to_treatment = pathway_cols[2].number_input(
-        label='💊 Delay between arrival at IVT centre and treatment', 
+        label='💊 Delay between arrival at either centre and IVT treatment', 
         min_value=0, max_value=600, value=30, step=5)
     mt_arrival_to_treatment = pathway_cols[2].number_input(
-        label='💉 Delay between arrival at MT centre and treatment', 
+        label='💉 Delay between arrival at MT centre and MT treatment', 
         min_value=0, max_value=600, value=90, step=5)
     # ----- end of inputs ----- 
 
@@ -56,7 +56,9 @@ def inputs_pathway():
         onset_to_ambulance_arrival = onset_to_ambulance_arrival,
         travel_to_mt = travel_to_mt, 
         ivt_arrival_to_treatment = ivt_arrival_to_treatment,
-        mt_arrival_to_treatment = mt_arrival_to_treatment,
+        mt_arrival_to_treatment = np.max([
+            mt_arrival_to_treatment-ivt_arrival_to_treatment,1]),
+        # Always at least one minute after IVT before MT
     )
 
     # Calculate times to treatment: 
@@ -80,6 +82,7 @@ def inputs_pathway():
     ])
 
     case2_time_to_mt = case2_time_to_ivt + np.sum([
+        -ivt_arrival_to_treatment,
         mt_arrival_to_treatment
     ])
 

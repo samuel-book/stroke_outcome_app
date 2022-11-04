@@ -28,6 +28,9 @@ from outcome_utilities.added_utility_between_dists import \
 from outcome_utilities.inputs import \
     find_useful_dist_dict, inputs_patient_population, inputs_pathway, \
     utility_weights
+from outcome_utilities.plot_timeline import \
+    plot_timeline, plot_emoji_on_timeline, make_timeline_plot
+from outcome_utilities.make_dataframe import make_combo_mRS_bin_dataframe
 
 
 # ----- Functions ----- 
@@ -42,7 +45,6 @@ def make_colour_list():
     # Change to array for easier indexing later:
     colour_list = np.array(colour_list)
     return colour_list
-
 
 
 def make_fig_legend(colour_list):
@@ -133,119 +135,6 @@ def draw_mRS_colours_on_utility_chart(mRS_dist_mix, weighted_added_utils,
             edgecolor='None',
             # zorder=0,
             )
-
-
-def plot_timeline(time_dict, ax=None, y=0, emoji_dict={}):
-    label_dict = dict( 
-        onset = 'Onset',
-        onset_to_ambulance_arrival = 'Ambulance\narrives',
-        travel_to_ivt = 'Arrive at\nIVT\ncentre', 
-        travel_to_mt = 'Arrive at\nIVT+MT\ncentre', 
-        ivt_arrival_to_treatment = 'IVT',
-        transfer_additional_delay = 'Transfer\nbegins',
-        travel_ivt_to_mt = 'Arrive at\nIVT+MT\ncentre',
-        mt_arrival_to_treatment = 'MT',
-        )
-
-    if ax==None:
-        fig, ax = plt.subplots()
-    time_cumulative = 0.0
-    y_under_offset = -0.05
-    y_label_offset = 0.30
-    for time_key in time_dict.keys():
-        t_min = time_dict[time_key]
-        time_cumulative += t_min/60.0
-
-        if 'ivt_arrival_to_treatment' in time_key:
-            colour = 'b' 
-            write_under=True 
-        elif 'mt_arrival_to_treatment' in time_key:
-            colour = 'r'
-            write_under=True 
-        else:
-            colour = 'k'
-            write_under=False 
-
-        if time_dict[time_key]==0.0 and time_key!='onset':
-            x_plot = np.NaN 
-        else:
-            x_plot = time_cumulative
-        ax.scatter(x_plot, y, marker='|', s=200, color=colour)
-
-        ax.annotate(
-            label_dict[time_key], xy=(x_plot, y+y_label_offset), 
-            rotation=0, color=colour, ha='center', va='bottom')
-        if write_under: 
-            time_str = (f'{int(60*time_cumulative//60):2d}hr '+
-                        f'{int(60*time_cumulative%60):2d}min')
-            ax.annotate(
-                time_str, xy=(x_plot, y+y_under_offset), color=colour,
-                ha='center', va='top', rotation=20)
-    ax.plot([0, time_cumulative], [y,y], color='k', zorder=0)
-
-
-def plot_emoji_on_timeline(ax, emoji_dict, time_dict, y=0, aspect=1.0, xlim=[], ylim=[]):
-    """Do this after the timeline is drawn so sizing is consistent."""
-
-    y_emoji_offset = 0.15
-
-    y_span = ylim[1] - ylim[0]
-    y_size = 1.5*0.07*y_span #* aspect
-
-    x_span = xlim[1] - xlim[0]
-    x_size = 1.5*0.04*x_span #/ aspect
-
-    time_cumulative = 0.0 
-    for time_key in time_dict.keys():
-        if time_key in emoji_dict.keys(): 
-            t_min = time_dict[time_key]
-            time_cumulative += t_min/60.0           
-            if time_dict[time_key]==0.0 and time_key!='onset':
-                x_plot = np.NaN 
-            else:
-                x_plot = time_cumulative
-                
-                emoji = emoji_dict[time_key].strip(':')
-                # Import from file 
-                emoji_image = plt.imread('./emoji/'+emoji+'.png')
-                ext_xmin = x_plot - x_size*0.5 
-                ext_xmax = x_plot + x_size*0.5 
-                ext_ymin = y+y_emoji_offset - y_size*0.5 
-                ext_ymax = y+y_emoji_offset + y_size*0.5 
-                ax.imshow(emoji_image, 
-                          extent=[ext_xmin, ext_xmax, ext_ymin, ext_ymax])
-        # ax.annotate(emoji_dict[time_key], xy=(time_cumulative, y+y_emoji_offset))
-
-
-def make_timeline_plot(ax, time_dicts, emoji_dict={}):
-    
-    y_step = 1.0
-    y_vals = np.arange(0.0, y_step*len(time_dicts), y_step)[::-1]
-    for i, time_dict in enumerate(time_dicts):
-        plot_timeline(time_dict, ax, y=y_vals[i], emoji_dict=emoji_dict)
-    
-    xlim = ax.get_xlim()
-    ax.set_xticks(np.arange(0, xlim[1], (1+(xlim[1]//6))*(10/60)), minor=True)
-    ax.set_xlabel('Time since onset (hours)')
-
-    ax.set_ylim(-0.25, y_step*(len(time_dicts)-0.2))
-    ylim = ax.get_ylim()
-    ax.set_yticks(y_vals)
-    ax.set_yticklabels(
-        [f'Case {i+1}' for i in range(len(time_dicts))], fontsize=14)
-
-    aspect = 1.0/(ax.get_data_ratio()*2)
-    ax.set_aspect(aspect)
-    for i, time_dict in enumerate(time_dicts):
-        plot_emoji_on_timeline(ax, emoji_dict, time_dict, y=y_vals[i], 
-                               aspect=aspect, xlim=xlim, ylim=ylim)
-
-    ax.set_xlim(xlim)
-    ax.set_ylim(ylim)
-    ax.set_aspect(aspect)
-
-    for spine in ['top', 'left', 'right']:
-        ax.spines[spine].set_color('w')
 
 
 
@@ -370,41 +259,33 @@ st.set_page_config(
     )
 
 st.title('Stroke outcome modelling')
-# st.subheader('test')
 st.write(
     'Emoji! :ambulance: :hospital: :pill: :syringe: ',
     ':hourglass_flowing_sand: :crystal_ball: :ghost: :skull: ',
     ':thumbsup: :thumbsdown:' 
     )
 
+# Define the two cases: 
+st.write('We can compare the expected outcomes for two cases. ')
+st.write('__Case 1:__ all eligible patients receive IVT at the IVT-only centre, and then patients requiring MT are transported to the IVT+MT centre for further treatment.')
+st.write('__Case 2:__ all patients are transported directly to the IVT+MT centre and receive the appropriate treatments there.')
 
+
+
+# ###########################
+# ########## SETUP ##########
+# ###########################
+st.header('Setup')
 # ----- Population parameters -----
-st.header('Patient population')
+st.subheader('Patient population')
 prop_dict = inputs_patient_population()
 
 
 # ----- Timeline of patient pathway -----
-st.header('Patient pathway')
-st.write('Times in minutes for each step:')
+st.subheader('Patient pathway')
+st.write('Each step uses times in minutes. To remove a step, set the value to zero.')
 (case1_time_dict, case2_time_dict, case1_time_to_ivt, 
  case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = inputs_pathway()
-
-# Define the two cases: 
-st.write('We can compare the expected outcomes for two cases. ')
-
-st.write('__Case 1:__ all eligible patients receive IVT at the IVT-only centre, and then patients requiring MT are transported to the IVT+MT centre for further treatment.')
-# # Summarise treatment times: 
-# st.write(f'+ Time from onset to IVT is {case1_time_to_ivt//60} hours ',
-#          f'{case1_time_to_ivt%60} minutes.')
-# st.write(f'+ Time from onset to MT is {case1_time_to_mt//60} hours ',
-#          f'{case1_time_to_mt%60} minutes.')
-
-st.write('__Case 2:__ all patients are transported directly to the IVT+MT centre and receive the appropriate treatments there.')
-
-# st.write(f'+ Time from onset to IVT is {case2_time_to_ivt//60} hours ',
-#          f'{case2_time_to_ivt%60} minutes.')
-# st.write(f'+ Time from onset to MT is {case2_time_to_mt//60} hours ',
-#          f'{case2_time_to_mt%60} minutes.')
 
 # Draw timelines 
 fig, ax = plt.subplots(figsize=(12,8))
@@ -439,86 +320,6 @@ lvo_mt_case2_dict = find_useful_dist_dict(
     )
 # ich_case1_dict = find_useful_dist_dict(occlusion_input, treatment_input, time_input)
 # ich_case2_dict = find_useful_dist_dict(occlusion_input, treatment_input, time_input)
-
-
-def make_combo_mRS_bin_dataframe(df1, df2, treatment_time1, treatment_time2):
-    if treatment_time1<treatment_time2:
-        df_main = df1 
-        df_extra = df2 
-    elif treatment_time2<treatment_time1:
-        df_main = df2 
-        df_extra = df1 
-    else:
-        # Same rows in both so just return one: 
-        return df1 
-
-    new_df = pd.concat((df_main.iloc[:3], df_extra.iloc[2:3], df_main.iloc[3:]), axis=0)
-    return new_df 
-
-def compare_cases(dict1, dict2):
-    # Plot probs with time 
-    st.subheader('Probability variation with time')
-    do_probs_with_time(
-        dict1['time_no_effect'], dict1['A_list'], dict2['b_list'], 
-        colour_list, 
-        [dict1['treatment_time'], dict2['treatment_time']], 
-        treatment_labels = [f'Case {i+1}' for i in range(2)],
-        time_no_effect_mt=time_no_effect_mt
-        )
-
-    # # Plot change in util, mRS 
-    # st.subheader('Changes in utility and mRS')
-    # do_prob_bars()
-
-
-    # # Tabulate mRS bins 
-    st.subheader('mRS data tables')
-    df_combo = make_combo_mRS_bin_dataframe(
-        dict1['df_dists_bins'], dict2['df_dists_bins'], 
-        dict1['treatment_time'], dict2['treatment_time'])
-    st.dataframe(df_combo)
-
-# ----- Probability distributions ----- 
-st.header('Calculate changes to probability distributions')
-probdist_expander = st.expander('Probability distributions')
-with probdist_expander: 
-
-    # ----- Add legend -----
-    fig_legend = make_fig_legend(colour_list)
-    st.pyplot(fig_legend)
-
-    tab1, tab2, tab3, tab4 = st.tabs([
-        'nLVO treated with IVT',
-        'LVO treated with IVT only',
-        'LVO treated with MT',
-        'ICH' 
-    ])
-
-    with tab1:
-        compare_cases(nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
-    with tab2:
-        compare_cases(lvo_ivt_case1_dict, lvo_ivt_case2_dict)
-    with tab3:
-        compare_cases(lvo_mt_case1_dict, lvo_mt_case2_dict)
-    with tab4:
-        st.write('Nothing to see here.')
-
-
-
-# ----- Sum up changes ----- 
-st.header('Calculate overall changes in utility and mRS')
-total_expander = st.expander('Change sums')
-with total_expander: 
-    cols_util_tables = st.columns(2) 
-    cols_util_tables[0].write('y')
-    cols_util_tables[1].write('s')
-
-    cols_mRS_tables = st.columns(2) 
-    cols_mRS_tables[0].write('f')
-    cols_mRS_tables[1].write('d')
-
-
-
 
 
 
@@ -569,22 +370,18 @@ mean_mRS_dict_lvo_mt_case2, mean_util_dict_lvo_mt_case2 = \
         utility_weights
         )
 
-st.write(mean_mRS_dict_nlvo_ivt_case2['pre_stroke'])
-st.write(mean_mRS_dict_lvo_ivt_case2['pre_stroke'])
-st.write(mean_mRS_dict_lvo_mt_case2['pre_stroke'])
-
 
 mean_mRS_change_case1 = find_weighted_change(
     mean_mRS_dict_lvo_ivt_case1['diff_no_treatment'], 
     mean_mRS_dict_lvo_mt_case1['diff_no_treatment'], 
     mean_mRS_dict_nlvo_ivt_case1['diff_no_treatment'], 
-    prop_dict)
+    prop_dict, util=False)
 
 mean_mRS_change_case2 = find_weighted_change(
     mean_mRS_dict_lvo_ivt_case2['diff_no_treatment'], 
     mean_mRS_dict_lvo_mt_case2['diff_no_treatment'], 
     mean_mRS_dict_nlvo_ivt_case2['diff_no_treatment'], 
-    prop_dict)
+    prop_dict, util=False)
 
 
 mean_util_change_case1 = find_weighted_change(
@@ -600,41 +397,287 @@ mean_util_change_case2 = find_weighted_change(
     prop_dict)
 
 
+# Find mean population utility and mRS with no treatment: 
+mean_mRS_no_treatment_case1 = calculate_combo_mean_changes(
+    prop_dict, 
+    mean_mRS_dict_nlvo_ivt_case1, 
+    mean_mRS_dict_lvo_ivt_case1, 
+    mean_mRS_dict_lvo_mt_case1, 
+    'no_treatment')
+mean_mRS_no_treatment_case2 = calculate_combo_mean_changes(
+    prop_dict, 
+    mean_mRS_dict_nlvo_ivt_case2, 
+    mean_mRS_dict_lvo_ivt_case2, 
+    mean_mRS_dict_lvo_mt_case2, 
+    'no_treatment')
+
+mean_util_no_treatment_case1 = calculate_combo_mean_changes(
+    prop_dict, 
+    mean_util_dict_nlvo_ivt_case1, 
+    mean_util_dict_lvo_ivt_case1, 
+    mean_util_dict_lvo_mt_case1, 
+    'no_treatment')
+mean_util_no_treatment_case2 = calculate_combo_mean_changes(
+    prop_dict, 
+    mean_util_dict_nlvo_ivt_case2, 
+    mean_util_dict_lvo_ivt_case2, 
+    mean_util_dict_lvo_mt_case2, 
+    'no_treatment')
 
 
+mean_mRS_treated_case1 = mean_mRS_no_treatment_case1 + mean_mRS_change_case1
+mean_mRS_treated_case2 = mean_mRS_no_treatment_case2 + mean_mRS_change_case2
 
+mean_util_treated_case1 = mean_util_no_treatment_case1 + mean_util_change_case1
+mean_util_treated_case2 = mean_util_no_treatment_case2 + mean_util_change_case2
+
+
+# ###########################
+# ######### RESULTS #########
+# ###########################
+st.header('Results')
 # ----- Show metric for +/- mRS and utility -----
-st.subheader('Change in mRS and utility')
-st.write('Change in mean mRS case1', mean_mRS_change_case1)
-st.write('Change in mean mRS case2', mean_mRS_change_case2)
-
-st.write('Change in mean util case1', mean_util_change_case1)
-st.write('Change in mean util case2', mean_util_change_case2)
+st.subheader('Changes in mRS and utility')
 
 
+# # Summarise treatment times: 
+# st.write(f'+ Time from onset to IVT is {case1_time_to_ivt//60} hours ',
+#          f'{case1_time_to_ivt%60} minutes.')
+# st.write(f'+ Time from onset to MT is {case1_time_to_mt//60} hours ',
+#          f'{case1_time_to_mt%60} minutes.')
 
-# # Put the two metrics in columns: 
-# met_col1, met_col2 = st.columns(2)
+# st.write(f'+ Time from onset to IVT is {case2_time_to_ivt//60} hours ',
+#          f'{case2_time_to_ivt%60} minutes.')
+# st.write(f'+ Time from onset to MT is {case2_time_to_mt//60} hours ',
+#          f'{case2_time_to_mt%60} minutes.')
 
-# # mRS:
-# met_col1.metric('Population mean mRS', 
-#     f'{mean_mRS_time_input_treatment:0.2f}', 
-#     f'{mean_mRS_diff_no_treatment:0.2f} from "no treatment"',
-#     delta_color='inverse' # A negative difference is good.
-#     )
-# met_col1.metric('',#'Population mean mRS', 
-#     '',#f'{mean_mRS_time_input_treatment:0.2f}', 
-#     f'{mean_mRS_diff_pre_stroke:0.2f} from "pre-stroke"',
-#     delta_color='inverse' # A negative difference is good.
-#     )
+# st.write(mean_mRS_dict_nlvo_ivt_case2['pre_stroke'])
+# st.write(mean_mRS_dict_lvo_ivt_case2['pre_stroke'])
+# st.write(mean_mRS_dict_lvo_mt_case2['pre_stroke'])
 
-# # Utility: 
-# met_col2.metric('Population mean utility', 
-#     f'{mean_utility_time_input_treatment:0.3f}', 
-#     f'{mean_utility_diff_no_treatment:0.3f} from "no treatment"',
-#     )
-# met_col2.metric('',#'Population mean utility', 
-#     '',#f'{mean_utility_time_input_treatment:0.3f}', 
-#     f'{mean_utility_diff_pre_stroke:0.3f} from "pre-stroke"',
-#     )
+st.write('The differences from the not-treated population are:')
+
+cols_metrics = st.columns(2) 
+
+def choose_up_down_emoji(value):
+    emoji = ':arrow_up:' if value>0 else ':arrow_down:' 
+    return emoji 
+
+cols_metrics[0].write('__Case 1__')
+cols_metrics[0].write('Population mean mRS')
+
+cols_metrics[0].write(
+    'If nobody were treated: ' + 
+    f' {mean_mRS_no_treatment_case1:6.3f}'
+    )
+cols_metrics[0].write(
+    'If the chosen sample were treated: ' + 
+    f' {mean_mRS_treated_case1:6.3f}'
+    )
+
+cols_metrics[0].write(
+    choose_up_down_emoji(mean_mRS_change_case1) + 
+    f' Change: {mean_mRS_change_case1:6.3f}'
+    )
+
+
+cols_metrics[0].write('Population mean utility')
+cols_metrics[0].write(
+    'If nobody were treated: ' + 
+    f' {mean_util_no_treatment_case1:6.3f}'
+    )
+cols_metrics[0].write(
+    'If the chosen sample were treated: ' + 
+    f' mean mRS {mean_util_treated_case1:6.3f}'
+    )
+cols_metrics[0].write(
+    choose_up_down_emoji(mean_util_change_case1) + 
+    f' Change: {mean_util_change_case1:6.3f}'
+    )
+
+
+
+cols_metrics[1].write('__Case 2__')
+cols_metrics[1].write(r'$\phantom{0}$')
+
+cols_metrics[1].write(
+    'If nobody were treated: ' + 
+    f' {mean_mRS_no_treatment_case2:6.3f}'
+    )
+cols_metrics[1].write(
+    'If the chosen sample were treated: ' + 
+    f' mean mRS {mean_mRS_treated_case2:6.3f}'
+    )
+
+cols_metrics[1].write(
+    choose_up_down_emoji(mean_mRS_change_case2) + 
+    f' Change: {mean_mRS_change_case2:6.3f}', fontsize=18
+    )
+
+
+cols_metrics[1].write(r'$\phantom{0}$')
+cols_metrics[1].write(
+    'If nobody were treated: ' + 
+    f' {mean_util_no_treatment_case2:6.3f}'
+    )
+cols_metrics[1].write(
+    'If the chosen sample were treated: ' + 
+    f' mean mRS {mean_util_treated_case2:6.3f}'
+    )
+cols_metrics[1].write(
+    choose_up_down_emoji(mean_util_change_case2) + 
+    f' Change: {mean_util_change_case2:6.3f}'
+    )
+
+
+# Make a new dataframe of the important values to show: 
+metric_mRS_array = np.array([
+    [mean_mRS_no_treatment_case1, mean_mRS_no_treatment_case2],
+    [mean_mRS_treated_case1, mean_mRS_treated_case2],
+    [mean_mRS_change_case1, mean_mRS_change_case2]
+    ], dtype=float)
+metric_util_array = np.array([
+    [mean_util_no_treatment_case1, mean_util_no_treatment_case2],
+    [mean_util_treated_case1, mean_util_treated_case2],
+    [mean_util_change_case1, mean_util_change_case2]
+    ], dtype=float)
+
+row_headers = [
+    'No treatment',
+    'Treated at chosen times',
+    'Change'
+]
+column_headers = ['Case 1', 'Case 2']
+
+metric_mRS_df = pd.DataFrame(metric_mRS_array, columns=column_headers)#, index=row_headers)
+
+metric_util_df = pd.DataFrame(metric_util_array, columns=column_headers, index=row_headers)
+
+heading_properties = [('font-size', '18px')]
+
+cell_properties = [('font-size', '16px')]
+
+dfstyle = [dict(selector="th", props=heading_properties),\
+ dict(selector="td", props=cell_properties)]
+
+metric_mRS_df.style.set_table_styles(dfstyle)
+
+metric_mRS_df.style.background_gradient(cmap='viridis', axis=1, subset=metric_mRS_df.index[-1])
+
+
+# st.write(metric_mRS_df.index[2])
+
+# st.write(metric_mRS_df.loc[2])
+
+metric_mRS_df = metric_mRS_df.style.set_properties(**{'background-color':'green'}, axis=1, subset=metric_mRS_df.index[2])
+# metric_mRS_df.index = row_headers
+
+cols_metric_dfs = st.columns(2) 
+cols_metric_dfs[0].dataframe(metric_mRS_df)
+cols_metric_dfs[1].dataframe(metric_util_df)
+
+
+
+
+# Put the two metrics in columns: 
+met_col1, met_col2 = st.columns(2)
+
+# mRS:
+met_col1.subheader('Case 1')
+met_col1.metric('Population mean mRS', 
+    f'{mean_mRS_treated_case1:0.2f}', 
+    f'{mean_mRS_change_case1:0.2f} from "no treatment"',
+    delta_color='inverse' # A negative difference is good.
+    )
+met_col1.metric('Population mean utility', 
+    f'{mean_util_treated_case1:0.3f}', 
+    f'{mean_util_change_case1:0.3f} from "no treatment"',
+    )
+
+# Utility: 
+met_col2.subheader('Case 2')
+met_col2.metric('Population mean mRS', 
+    f'{mean_mRS_treated_case2:0.2f}', 
+    f'{mean_mRS_change_case2:0.2f} from "no treatment"',
+    delta_color='inverse' # A negative difference is good.
+    )
+met_col2.metric('Population mean utility', 
+    f'{mean_util_treated_case2:0.3f}', 
+    f'{mean_util_change_case2:0.3f} from "no treatment"',
+    )
+
+
+# ###########################
+# ######### METHOD ##########
+# ###########################
+st.write('-'*50)
+
+st.header('Details of the calculation')
+st.write('The following bits detail the calculation.')
+
+
+def compare_cases(dict1, dict2):
+    # Plot probs with time 
+    st.subheader('Probability variation with time')
+    do_probs_with_time(
+        dict1['time_no_effect'], dict1['A_list'], dict2['b_list'], 
+        colour_list, 
+        [dict1['treatment_time'], dict2['treatment_time']], 
+        treatment_labels = [f'Case {i+1}' for i in range(2)],
+        time_no_effect_mt=time_no_effect_mt
+        )
+
+    # # Plot change in util, mRS 
+    # st.subheader('Changes in utility and mRS')
+    # do_prob_bars()
+
+
+    # # Tabulate mRS bins 
+    st.subheader('mRS data tables')
+    df_combo = make_combo_mRS_bin_dataframe(
+        dict1['df_dists_bins'], dict2['df_dists_bins'], 
+        dict1['treatment_time'], dict2['treatment_time'])
+    st.dataframe(df_combo)
+
+# ----- Probability distributions ----- 
+st.subheader('Find mRS distributions at the treatment times')
+probdist_expander = st.expander('Probability distributions')
+with probdist_expander: 
+
+    # ----- Add legend -----
+    fig_legend = make_fig_legend(colour_list)
+    st.pyplot(fig_legend)
+
+    tab1, tab2, tab3, tab4 = st.tabs([
+        'nLVO treated with IVT',
+        'LVO treated with IVT only',
+        'LVO treated with MT',
+        'ICH' 
+    ])
+
+    with tab1:
+        compare_cases(nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
+    with tab2:
+        compare_cases(lvo_ivt_case1_dict, lvo_ivt_case2_dict)
+    with tab3:
+        compare_cases(lvo_mt_case1_dict, lvo_mt_case2_dict)
+    with tab4:
+        st.write('Nothing to see here.')
+
+
+
+# ----- Sum up changes ----- 
+st.subheader('Calculate overall changes in utility and mRS')
+total_expander = st.expander('Change sums')
+with total_expander: 
+    cols_util_tables = st.columns(2) 
+    cols_util_tables[0].write('y')
+    cols_util_tables[1].write('s')
+
+    cols_mRS_tables = st.columns(2) 
+    cols_mRS_tables[0].write('f')
+    cols_mRS_tables[1].write('d')
+
+
+
 

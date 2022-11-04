@@ -133,7 +133,7 @@ def calculate_combo_mean_changes(
 
 
 def find_weighted_change(change_lvo_ivt, change_lvo_mt, change_nlvo_ivt, 
-                         patient_props):
+                         patient_props, util=True):
     """
     Take the total changes for each category and calculate their
     weighted sum, where weights are from the proportions of the 
@@ -148,7 +148,12 @@ def find_weighted_change(change_lvo_ivt, change_lvo_mt, change_nlvo_ivt,
     """
     # If LVO-IVT is greater change than LVO-MT then adjust MT for 
     # proportion of patients receiving IVT:
-    if change_lvo_ivt > change_lvo_mt:
+    adjust=False
+    if util and change_lvo_ivt > change_lvo_mt:
+        adjust=True
+    elif util==False and change_lvo_ivt < change_lvo_mt:
+        adjust=True
+    if adjust:
         diff = change_lvo_ivt - change_lvo_mt
         change_lvo_mt += diff * patient_props['lvo_mt_also_receiving_ivt']
 
