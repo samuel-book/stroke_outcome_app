@@ -31,7 +31,8 @@ from outcome_utilities.inputs import \
 from outcome_utilities.plot_timeline import \
     plot_timeline, plot_emoji_on_timeline, make_timeline_plot
 from outcome_utilities.make_dataframe import make_combo_mRS_bin_dataframe
-
+from outcome_utilities.change_sums import \
+    do_change_sums
 
 # ----- Functions ----- 
 def make_colour_list():
@@ -65,16 +66,7 @@ def make_fig_legend(colour_list):
     return fig_legend
 
 
-def plot_utility_chart(ax_util_change, mRS_dist_mix, weighted_added_utils,
-    occlusion_str, treatment_str):
-    # Bottom subplot
-    if occlusion_str=='nlvo':
-        ylim_util_change = [-0.02, 0.162] # nLVO IVT
-    else:
-        if treatment_str=='mt':
-            ylim_util_change = [-0.05, 0.310] # LVO MT
-        else:
-            ylim_util_change = [-0.027, 0.062] # LVO IVT
+def plot_utility_chart(ax_util_change, mRS_dist_mix, weighted_added_utils):
 
     ax_util_change.plot(mRS_dist_mix, weighted_added_utils, color='k', 
         label='Cumulative weighted added utility')
@@ -83,17 +75,22 @@ def plot_utility_chart(ax_util_change, mRS_dist_mix, weighted_added_utils,
     ax_util_change.set_xlabel('Probability')
     ax_util_change.tick_params(top=True, right=True, which='both')
 
+    # ax_util_change.set_ylim(ylim_util_change)
+    ylim_util_change = list(ax_util_change.get_ylim())
+    y_span = ylim_util_change[1]-ylim_util_change[0]
+    ylim_util_change[0] -= 0.05 * y_span 
+    ylim_util_change[1] += 0.05 * y_span
     ax_util_change.set_ylim(ylim_util_change)
     return ylim_util_change
     
     
-def plot_bars(dists_to_bar, dists_cumsum_to_bar, ax_bars, treatment_str, 
+def plot_bars(dists_to_bar, dists_cumsum_to_bar, ax_bars, 
     time_input, y_list, bar_height):
     y_labels = [
         'Pre-stroke', 
-        (f'Treated with {treatment_str.upper()} at '+'\n'
-        + f'{time_input//60} hours '
-        + f'{time_input%60:02d} minutes'),
+        (f'Treated at '+'\n'
+        + f'{time_input//60}hr '
+        + f'{time_input%60:02d}min'),
         'No treatment'
         ]
     # ^ keep formatting for e.g. 01 minutes in the middle bar 
@@ -114,7 +111,7 @@ def plot_bars(dists_to_bar, dists_cumsum_to_bar, ax_bars, treatment_str,
 
 
 def draw_mRS_colours_on_utility_chart(mRS_dist_mix, weighted_added_utils, 
-    mRS_list_time_input_treatment, mRS_list_no_treatment, ylim_util_change,):
+    mRS_list_time_input_treatment, mRS_list_no_treatment, ylim_util_change, ax_util_change):
     for i in range(1,len(mRS_dist_mix)):
         y_offset = 0.05 * (ylim_util_change[1]-ylim_util_change[0])
         ax_util_change.fill_between(
@@ -135,6 +132,7 @@ def draw_mRS_colours_on_utility_chart(mRS_dist_mix, weighted_added_utils,
             edgecolor='None',
             # zorder=0,
             )
+    ax_util_change.set_ylim(ylim_util_change)
 
 
 
@@ -157,12 +155,10 @@ def do_probs_with_time(
 
 
 def do_prob_bars( 
-        dist_pre_stroke, dist_time_input_treatment, 
-        dist_no_treatment, dist_cumsum_pre_stroke, 
-        dist_cumsum_time_input_treatment, dist_cumsum_no_treatment,
+        dist_dict,
         mRS_dist_mix, weighted_added_utils,
-        treatment_str, occlusion_str, mRS_list_time_input_treatment, 
-        mRS_list_no_treatment
+        mRS_list_time_input_treatment, 
+        mRS_list_no_treatment, time_input
         ):
     # ----- Plot probability distributions ----- 
     st.subheader('The effect of treatment on mRS')
@@ -171,17 +167,21 @@ def do_prob_bars(
     ax_bars = axs[0] 
     ax_util_change = axs[1]
 
-
     bar_height = 0.5
     y_list = [2, 1, 0]
     plot_bars(
-        [dist_pre_stroke, dist_time_input_treatment, dist_no_treatment], 
-        [dist_cumsum_pre_stroke, dist_cumsum_time_input_treatment, 
-            dist_cumsum_no_treatment], ax_bars, treatment_str, 
-        time_input, y_list, bar_height)
+        [dist_dict['dist_pre_stroke'], 
+         dist_dict['dist_time_input_treatment'], 
+         dist_dict['dist_no_treatment']
+         ], 
+        [dist_dict['dist_cumsum_pre_stroke'], 
+         dist_dict['dist_cumsum_time_input_treatment'], 
+         dist_dict['dist_cumsum_no_treatment']
+         ], 
+        ax_bars, time_input, y_list, bar_height)
+
     ylim_util_change = (
-        plot_utility_chart(ax_util_change, mRS_dist_mix, weighted_added_utils,
-        occlusion_str, treatment_str) )
+        plot_utility_chart(ax_util_change, mRS_dist_mix, weighted_added_utils) )
 
 
     if st.checkbox('Mark changes between treated and no treatment'):
@@ -197,7 +197,7 @@ def do_prob_bars(
         draw_mRS_colours_on_utility_chart(
             mRS_dist_mix, weighted_added_utils, 
             mRS_list_time_input_treatment, mRS_list_no_treatment, 
-            ylim_util_change
+            ylim_util_change, ax_util_change
             )
         write_text_about_utility_colours = 1
     else:
@@ -219,7 +219,51 @@ def do_prob_bars(
         st.write('On either side of the cumulative weighted added utility (the solid black line), the two mRS distributions are shown. Immediately above the line is the treated distribution, and immediately below is the "no treatment" distribution.')
 
 
+    checkbox_util_sums = st.checkbox('Show sums for the cumulative weighted mRS') 
+    if checkbox_util_sums:
+        st.latex(r'''\textcolor{#0072B2}{Hello}''')
+        st.latex(r'''\textcolor{#009E73}{Hello}''')
+        st.latex(r'''\textcolor{#D55E00}{Hello}''')
+        st.latex(r'''\textcolor{#CC79A7}{Hello}''')
+        st.latex(r'''\textcolor{#F0E442}{Hello}''')
+        st.latex(r'''\textcolor{#56B4E9}{Hello}''')
+        st.latex(r'''\textcolor{DarkSlateGray}{Hello}''')
+    
 
+    checkbox_mRS_sums = st.checkbox('Show sums for the cumulative weighted utility') 
+    if checkbox_mRS_sums:
+        st.latex(r'''\textcolor{#0072B2}{Hello}''')
+        st.latex(r'''\textcolor{#009E73}{Hello}''')
+        st.latex(r'''\textcolor{#D55E00}{Hello}''')
+        st.latex(r'''\textcolor{#CC79A7}{Hello}''')
+        st.latex(r'''\textcolor{#F0E442}{Hello}''')
+        st.latex(r'''\textcolor{#56B4E9}{Hello}''')
+        st.latex(r'''\textcolor{DarkSlateGray}{Hello}''')
+
+
+def compare_probs_with_time(dict1, dict2):
+    # Plot probs with time 
+    st.subheader('Probability variation with time')
+
+    st.write('The mRS probability distributions are a concoction of various sources of data. The full details are given in [this document: "mRS distributions..."](https://github.com/samuel-book/stroke_outcome)')
+    
+    st.write('The boundaries between the mRS bins follow the shape of a logistic function. For details, see [this document: "Mathematics..."](https://github.com/samuel-book/stroke_outcome).')
+
+    do_probs_with_time(
+        dict1['time_no_effect'], dict1['A_list'], dict2['b_list'], 
+        colour_list, 
+        [dict1['treatment_time'], dict2['treatment_time']], 
+        treatment_labels = [f'Case {i+1}' for i in range(2)],
+        time_no_effect_mt=time_no_effect_mt
+        )
+
+    # # Tabulate mRS bins 
+    st.subheader('mRS data tables')
+    st.write('This table contains the probability distributions at key points from the probability vs. time graph above.')
+    df_combo = make_combo_mRS_bin_dataframe(
+        dict1['df_dists_bins'], dict2['df_dists_bins'], 
+        dict1['treatment_time'], dict2['treatment_time'])
+    st.table(df_combo)
 
 
 
@@ -259,17 +303,11 @@ st.set_page_config(
     )
 
 st.title('Stroke outcome modelling')
-st.write(
-    'Emoji! :ambulance: :hospital: :pill: :syringe: ',
-    ':hourglass_flowing_sand: :crystal_ball: :ghost: :skull: ',
-    ':thumbsup: :thumbsdown:' 
-    )
 
 # Define the two cases: 
 st.write('We can compare the expected outcomes for two cases. ')
 st.write('__Case 1:__ all eligible patients receive IVT at the IVT-only centre, and then patients requiring MT are transported to the IVT+MT centre for further treatment.')
 st.write('__Case 2:__ all patients are transported directly to the IVT+MT centre and receive the appropriate treatments there.')
-
 
 
 # ###########################
@@ -278,6 +316,7 @@ st.write('__Case 2:__ all patients are transported directly to the IVT+MT centre
 st.header('Setup')
 # ----- Population parameters -----
 st.subheader('Patient population')
+st.warning(':warning: Currently the ICH option does not impact the change in mRS or utility.')
 prop_dict = inputs_patient_population()
 
 
@@ -439,171 +478,51 @@ st.header('Results')
 # ----- Show metric for +/- mRS and utility -----
 st.subheader('Changes in mRS and utility')
 
-
-# # Summarise treatment times: 
-# st.write(f'+ Time from onset to IVT is {case1_time_to_ivt//60} hours ',
-#          f'{case1_time_to_ivt%60} minutes.')
-# st.write(f'+ Time from onset to MT is {case1_time_to_mt//60} hours ',
-#          f'{case1_time_to_mt%60} minutes.')
-
-# st.write(f'+ Time from onset to IVT is {case2_time_to_ivt//60} hours ',
-#          f'{case2_time_to_ivt%60} minutes.')
-# st.write(f'+ Time from onset to MT is {case2_time_to_mt//60} hours ',
-#          f'{case2_time_to_mt%60} minutes.')
-
-# st.write(mean_mRS_dict_nlvo_ivt_case2['pre_stroke'])
-# st.write(mean_mRS_dict_lvo_ivt_case2['pre_stroke'])
-# st.write(mean_mRS_dict_lvo_mt_case2['pre_stroke'])
-
-st.write('The differences from the not-treated population are:')
-
-cols_metrics = st.columns(2) 
-
-def choose_up_down_emoji(value):
-    emoji = ':arrow_up:' if value>0 else ':arrow_down:' 
-    return emoji 
-
-cols_metrics[0].write('__Case 1__')
-cols_metrics[0].write('Population mean mRS')
-
-cols_metrics[0].write(
-    'If nobody were treated: ' + 
-    f' {mean_mRS_no_treatment_case1:6.3f}'
-    )
-cols_metrics[0].write(
-    'If the chosen sample were treated: ' + 
-    f' {mean_mRS_treated_case1:6.3f}'
-    )
-
-cols_metrics[0].write(
-    choose_up_down_emoji(mean_mRS_change_case1) + 
-    f' Change: {mean_mRS_change_case1:6.3f}'
-    )
-
-
-cols_metrics[0].write('Population mean utility')
-cols_metrics[0].write(
-    'If nobody were treated: ' + 
-    f' {mean_util_no_treatment_case1:6.3f}'
-    )
-cols_metrics[0].write(
-    'If the chosen sample were treated: ' + 
-    f' mean mRS {mean_util_treated_case1:6.3f}'
-    )
-cols_metrics[0].write(
-    choose_up_down_emoji(mean_util_change_case1) + 
-    f' Change: {mean_util_change_case1:6.3f}'
-    )
-
-
-
-cols_metrics[1].write('__Case 2__')
-cols_metrics[1].write(r'$\phantom{0}$')
-
-cols_metrics[1].write(
-    'If nobody were treated: ' + 
-    f' {mean_mRS_no_treatment_case2:6.3f}'
-    )
-cols_metrics[1].write(
-    'If the chosen sample were treated: ' + 
-    f' mean mRS {mean_mRS_treated_case2:6.3f}'
-    )
-
-cols_metrics[1].write(
-    choose_up_down_emoji(mean_mRS_change_case2) + 
-    f' Change: {mean_mRS_change_case2:6.3f}', fontsize=18
-    )
-
-
-cols_metrics[1].write(r'$\phantom{0}$')
-cols_metrics[1].write(
-    'If nobody were treated: ' + 
-    f' {mean_util_no_treatment_case2:6.3f}'
-    )
-cols_metrics[1].write(
-    'If the chosen sample were treated: ' + 
-    f' mean mRS {mean_util_treated_case2:6.3f}'
-    )
-cols_metrics[1].write(
-    choose_up_down_emoji(mean_util_change_case2) + 
-    f' Change: {mean_util_change_case2:6.3f}'
-    )
-
-
-# Make a new dataframe of the important values to show: 
-metric_mRS_array = np.array([
-    [mean_mRS_no_treatment_case1, mean_mRS_no_treatment_case2],
-    [mean_mRS_treated_case1, mean_mRS_treated_case2],
-    [mean_mRS_change_case1, mean_mRS_change_case2]
-    ], dtype=float)
-metric_util_array = np.array([
-    [mean_util_no_treatment_case1, mean_util_no_treatment_case2],
-    [mean_util_treated_case1, mean_util_treated_case2],
-    [mean_util_change_case1, mean_util_change_case2]
-    ], dtype=float)
-
-row_headers = [
-    'No treatment',
-    'Treated at chosen times',
-    'Change'
-]
-column_headers = ['Case 1', 'Case 2']
-
-metric_mRS_df = pd.DataFrame(metric_mRS_array, columns=column_headers)#, index=row_headers)
-
-metric_util_df = pd.DataFrame(metric_util_array, columns=column_headers, index=row_headers)
-
-heading_properties = [('font-size', '18px')]
-
-cell_properties = [('font-size', '16px')]
-
-dfstyle = [dict(selector="th", props=heading_properties),\
- dict(selector="td", props=cell_properties)]
-
-metric_mRS_df.style.set_table_styles(dfstyle)
-
-metric_mRS_df.style.background_gradient(cmap='viridis', axis=1, subset=metric_mRS_df.index[-1])
-
-
-# st.write(metric_mRS_df.index[2])
-
-# st.write(metric_mRS_df.loc[2])
-
-metric_mRS_df = metric_mRS_df.style.set_properties(**{'background-color':'green'}, axis=1, subset=metric_mRS_df.index[2])
-# metric_mRS_df.index = row_headers
-
-cols_metric_dfs = st.columns(2) 
-cols_metric_dfs[0].dataframe(metric_mRS_df)
-cols_metric_dfs[1].dataframe(metric_util_df)
-
-
-
-
 # Put the two metrics in columns: 
 met_col1, met_col2 = st.columns(2)
 
 # mRS:
-met_col1.subheader('Case 1')
+met_col1.subheader('--- Case 1 ---')
+
+met_col1.write(
+    f'💊 Time to IVT: {case1_time_to_ivt//60}hr {case1_time_to_ivt%60}min.'
+    )
+met_col1.write(
+    f'💉 Time to MT: {case1_time_to_mt//60}hr {case1_time_to_mt%60}min.'
+    )
+met_col1.write('-'*20)
+
 met_col1.metric('Population mean mRS', 
     f'{mean_mRS_treated_case1:0.2f}', 
-    f'{mean_mRS_change_case1:0.2f} from "no treatment"',
+    f'{mean_mRS_change_case1:0.2f} from no treatment',
     delta_color='inverse' # A negative difference is good.
     )
+met_col1.write('-'*20)
 met_col1.metric('Population mean utility', 
     f'{mean_util_treated_case1:0.3f}', 
-    f'{mean_util_change_case1:0.3f} from "no treatment"',
+    f'{mean_util_change_case1:0.3f} from no treatment',
     )
 
 # Utility: 
-met_col2.subheader('Case 2')
+met_col2.subheader('--- Case 2 ---')
+
+met_col2.write(
+    f'💊 Time to IVT: {case2_time_to_ivt//60}hr {case2_time_to_ivt%60}min.'
+    )
+met_col2.write(
+    f'💉 Time to MT: {case2_time_to_mt//60}hr {case2_time_to_mt%60}min.'
+    )
+met_col2.write('-'*20)
+
 met_col2.metric('Population mean mRS', 
     f'{mean_mRS_treated_case2:0.2f}', 
-    f'{mean_mRS_change_case2:0.2f} from "no treatment"',
+    f'{mean_mRS_change_case2:0.2f} from no treatment',
     delta_color='inverse' # A negative difference is good.
     )
+met_col2.write('-'*20)
 met_col2.metric('Population mean utility', 
     f'{mean_util_treated_case2:0.3f}', 
-    f'{mean_util_change_case2:0.3f} from "no treatment"',
+    f'{mean_util_change_case2:0.3f} from no treatment',
     )
 
 
@@ -616,32 +535,11 @@ st.header('Details of the calculation')
 st.write('The following bits detail the calculation.')
 
 
-def compare_cases(dict1, dict2):
-    # Plot probs with time 
-    st.subheader('Probability variation with time')
-    do_probs_with_time(
-        dict1['time_no_effect'], dict1['A_list'], dict2['b_list'], 
-        colour_list, 
-        [dict1['treatment_time'], dict2['treatment_time']], 
-        treatment_labels = [f'Case {i+1}' for i in range(2)],
-        time_no_effect_mt=time_no_effect_mt
-        )
 
-    # # Plot change in util, mRS 
-    # st.subheader('Changes in utility and mRS')
-    # do_prob_bars()
-
-
-    # # Tabulate mRS bins 
-    st.subheader('mRS data tables')
-    df_combo = make_combo_mRS_bin_dataframe(
-        dict1['df_dists_bins'], dict2['df_dists_bins'], 
-        dict1['treatment_time'], dict2['treatment_time'])
-    st.dataframe(df_combo)
 
 # ----- Probability distributions ----- 
-st.subheader('Find mRS distributions at the treatment times')
-probdist_expander = st.expander('Probability distributions')
+st.subheader('mRS distributions at the treatment times')
+probdist_expander = st.expander('Show probability distributions')
 with probdist_expander: 
 
     # ----- Add legend -----
@@ -656,28 +554,107 @@ with probdist_expander:
     ])
 
     with tab1:
-        compare_cases(nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
+        compare_probs_with_time(nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
     with tab2:
-        compare_cases(lvo_ivt_case1_dict, lvo_ivt_case2_dict)
+        compare_probs_with_time(lvo_ivt_case1_dict, lvo_ivt_case2_dict)
     with tab3:
-        compare_cases(lvo_mt_case1_dict, lvo_mt_case2_dict)
+        compare_probs_with_time(lvo_mt_case1_dict, lvo_mt_case2_dict)
     with tab4:
         st.write('Nothing to see here.')
 
 
 
+
+# ----- Probability distributions ----- 
+st.subheader('Cumulative changes in mRS and utility')
+cumulative_expander = st.expander('Show cumulative changes')
+with cumulative_expander: 
+
+    # ----- Add legend -----
+    fig_legend = make_fig_legend(colour_list)
+    st.pyplot(fig_legend)
+
+    tab1, tab2, tab3, tab4 = st.tabs([
+        'nLVO treated with IVT',
+        'LVO treated with IVT only',
+        'LVO treated with MT',
+        'ICH' 
+    ])
+
+    with tab1:
+        # nLVO IVT 
+        mRS_dist_mix, weighted_added_utils, mRS_list_time_input_treatment, mRS_list_no_treatment = \
+            find_added_utility_between_dists(
+                nlvo_ivt_case1_dict['dist_cumsum_time_input_treatment'], 
+                nlvo_ivt_case1_dict['dist_cumsum_no_treatment']
+                )
+        do_prob_bars( 
+            nlvo_ivt_case1_dict,
+            mRS_dist_mix, 
+            weighted_added_utils,
+            mRS_list_time_input_treatment, 
+            mRS_list_no_treatment,
+            case1_time_to_ivt)
+
+        #compare_probs_with_time(nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
+    with tab2:
+        pass 
+        #compare_probs_with_time(lvo_ivt_case1_dict, lvo_ivt_case2_dict)
+    with tab3:
+        pass
+        #compare_probs_with_time(lvo_mt_case1_dict, lvo_mt_case2_dict)
+    with tab4:
+        st.write('Nothing to see here.')
+
+
+
+
+
 # ----- Sum up changes ----- 
-st.subheader('Calculate overall changes in utility and mRS')
-total_expander = st.expander('Change sums')
+st.subheader('Calculations for overall changes in utility and mRS')
+total_expander = st.expander('Show the sums')
 with total_expander: 
-    cols_util_tables = st.columns(2) 
-    cols_util_tables[0].write('y')
-    cols_util_tables[1].write('s')
+    st.write('For each group, the weighted change is equal to the product '+
+             'of the following:')
+    st.write('+ proportion with this stroke type (%)')
+    st.write('+ proportion receiving this treatment (%)')
+    st.write('+ total change across this population')
+    st.write('The final change given in the Results section above ' +
+             'is the sum of the weighted changes.')
 
-    cols_mRS_tables = st.columns(2) 
-    cols_mRS_tables[0].write('f')
-    cols_mRS_tables[1].write('d')
+    do_change_sums(
+        prop_dict, 
+        mean_mRS_dict_nlvo_ivt_case1,
+        mean_mRS_dict_lvo_ivt_case1,
+        mean_mRS_dict_lvo_mt_case1,
+        mean_mRS_change_case1,
+        mean_mRS_dict_nlvo_ivt_case2,
+        mean_mRS_dict_lvo_ivt_case2,
+        mean_mRS_dict_lvo_mt_case2,
+        mean_mRS_change_case2,
+        mean_util_dict_nlvo_ivt_case1,
+        mean_util_dict_lvo_ivt_case1,
+        mean_util_dict_lvo_mt_case1,
+        mean_util_change_case1,
+        mean_util_dict_nlvo_ivt_case2,
+        mean_util_dict_lvo_ivt_case2,
+        mean_util_dict_lvo_mt_case2,
+        mean_util_change_case2,
+        )
 
+    st.latex(r'\times')
+    A = 34.222222
+    st.latex(r'''
+    a \times ar\% + a r^2 + a r^3 + \cdots + a r^{n-1} =
+    \sum_{k=0}^{n-1} ar^k =
+    a \left(\frac{1-r^{n}}{1-r}\right)
+    ''' + f'{A:3.2f}' + r'''ae''')
 
+    st.latex(r'''
+    \begin{align*}
+    & a_{ijk} = 2 \\
+    &(\mathrm{\textcolor{SkyBlue}{because}} ||V_1-V_2|| = \max_{i \in [d]}|V^i_1 - V^i_2|)
+    \end{align*}
+    ''')
 
 
