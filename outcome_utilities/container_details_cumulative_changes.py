@@ -232,7 +232,7 @@ def build_latex_cumsum_string(
             p_str += p_str_no_treatment
             p_str += r'''} )& \times '''
             # Bin widths:
-            p_str += f'{bin_width:5.3f}'
+            p_str += f'{bin_width:6.4f}'
             # Value of this line:
             p_str += r''' = &'''
             value_here = (
@@ -243,7 +243,7 @@ def build_latex_cumsum_string(
             if value_here>=0:
                 # Add sneaky + for alignment
                 p_str += r'\phantom{+}'
-            p_str += f'{value_here:5.3f}'
+            p_str += f'{value_here:6.4f}'
             # Next line:
             p_str += '\\\\'
 
@@ -258,7 +258,7 @@ def build_latex_cumsum_string(
     if cumulative_changes>=0:
         # Add sneaky + for alignment
         big_p_str += r'\phantom{+}'
-    big_p_str += f'{cumulative_changes:5.3f}\\\\'
+    big_p_str += f'{cumulative_changes:6.3f}\\\\'
     big_p_str += r'''\end{align*}'''
 
     return big_p_str 

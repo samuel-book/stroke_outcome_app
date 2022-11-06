@@ -1,6 +1,10 @@
 # -*- coding: UTF-8 -*-
 """
 Streamlit app for the stroke outcome model. 
+
+
+TO DO 06/NOV - fix rounding to nearest even problem with printing
+(sums currently don't add up when the preferred precision is printed)
 """
 
 # ----- Imports -----
@@ -73,18 +77,19 @@ nlvo_ivt_case1_dict, lvo_ivt_case1_dict, lvo_mt_case1_dict = \
 
 
 (mean_mRS_dict_nlvo_ivt_case1, 
-mean_util_dict_nlvo_ivt_case1, 
-mean_mRS_dict_lvo_ivt_case1, 
-mean_util_dict_lvo_ivt_case1, 
-mean_mRS_dict_lvo_mt_case1, 
-mean_util_dict_lvo_mt_case1, 
-mean_outcomes_dict_population_case1) = \
+ mean_util_dict_nlvo_ivt_case1, 
+ mean_mRS_dict_lvo_ivt_case1, 
+ mean_util_dict_lvo_ivt_case1, 
+ mean_mRS_dict_lvo_mt_case1, 
+ mean_util_dict_lvo_mt_case1, 
+ mean_outcomes_dict_population_case1) = \
     find_outcome_dicts(
         nlvo_ivt_case1_dict,
         lvo_ivt_case1_dict,
         lvo_mt_case1_dict,
         utility_weights,
-        prop_dict)
+        prop_dict
+        )
 
 
 
@@ -95,18 +100,19 @@ nlvo_ivt_case2_dict, lvo_ivt_case2_dict, lvo_mt_case2_dict = \
 
 
 (mean_mRS_dict_nlvo_ivt_case2, 
-mean_util_dict_nlvo_ivt_case2, 
-mean_mRS_dict_lvo_ivt_case2, 
-mean_util_dict_lvo_ivt_case2, 
-mean_mRS_dict_lvo_mt_case2, 
-mean_util_dict_lvo_mt_case2, 
-mean_outcomes_dict_population_case2) = \
+ mean_util_dict_nlvo_ivt_case2, 
+ mean_mRS_dict_lvo_ivt_case2, 
+ mean_util_dict_lvo_ivt_case2, 
+ mean_mRS_dict_lvo_mt_case2, 
+ mean_util_dict_lvo_mt_case2, 
+ mean_outcomes_dict_population_case2) = \
     find_outcome_dicts(
         nlvo_ivt_case2_dict,
         lvo_ivt_case2_dict,
         lvo_mt_case2_dict,
         utility_weights,
-        prop_dict)
+        prop_dict
+        )
 
 
 
