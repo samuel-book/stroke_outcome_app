@@ -1,7 +1,18 @@
 import streamlit as st 
 
-def do_change_sums(
-    prop_dict, 
+def main(args):
+    """
+    Main code for filling the container. 
+    """
+    st.write('For each group, the weighted change is equal to the product '+
+                'of the following:')
+    st.write('+ proportion with this stroke type (%)')
+    st.write('+ proportion receiving this treatment (%)')
+    st.write('+ total change across this population')
+    st.write('The final change given in the Results section above ' +
+                'is the sum of the weighted changes.')
+
+    (prop_dict, 
     mean_mRS_dict_nlvo_ivt_case1,
     mean_mRS_dict_lvo_ivt_case1,
     mean_mRS_dict_lvo_mt_case1,
@@ -17,8 +28,8 @@ def do_change_sums(
     mean_util_dict_nlvo_ivt_case2,
     mean_util_dict_lvo_ivt_case2,
     mean_util_dict_lvo_mt_case2,
-    mean_util_change_case2,
-    ):
+    mean_util_change_case2) = args
+
     st.subheader('__Case 1__: mRS')
     print_change_sums(
         prop_dict, 
