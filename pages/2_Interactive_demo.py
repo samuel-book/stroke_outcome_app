@@ -154,18 +154,99 @@ def do_probs_with_time(
     st.pyplot(fig_probs_time)
 
 
+def build_latex_cumsum_string(
+        weighted_added_utils, 
+        mRS_list_time_input_treatment,
+        mRS_list_no_treatment,
+        mRS_dist_mix,
+        colour_list, 
+        utility_weights,
+        util=True): 
+    cumulative_changes = 0.0
+    big_p_str = r'''\begin{align*}'''
+    # Add column headings:
+    big_p_str += (r'''& \mathrm{Treated} & & \mathrm{Not\ treated} & \mathrm{Proportion} \\
+                    ''')
+    for i in range(1, len(weighted_added_utils)):
+        if weighted_added_utils[i]-weighted_added_utils[i-1]!=0:
+
+            if util==True:
+                value_treated = utility_weights[mRS_list_time_input_treatment[i]]
+                value_no_treatment = utility_weights[mRS_list_no_treatment[i]]
+                
+                p_str_treated = f'{value_treated:5.2f}'
+                p_str_no_treatment = f'{value_no_treatment:5.2f}'
+            
+            else:
+                value_treated = mRS_list_time_input_treatment[i]
+                value_no_treatment = mRS_list_no_treatment[i]
+
+                p_str_treated = f'{value_treated:1d}'
+                p_str_no_treatment = f'{value_no_treatment:1d}'
+            
+            bin_width = mRS_dist_mix[i]-mRS_dist_mix[i-1]
+
+            p_str = ''
+
+            # First weight: 
+            p_str += r'''(&\textcolor{'''
+            p_str += f'{colour_list[mRS_list_time_input_treatment[i]]}'
+            p_str += r'''}{'''
+            if value_treated>=0:
+                # Add sneaky + for alignment
+                p_str += r'\phantom{+}'
+            p_str += p_str_treated
+            p_str += r'''}&-&\textcolor{'''
+
+            # Second weight: 
+            p_str += f'{colour_list[mRS_list_no_treatment[i]]}'
+            p_str += r'''}{'''
+            if value_no_treatment >=0:
+                # Add sneaky + for alignment
+                p_str += r'\phantom{+}'
+            p_str += p_str_no_treatment
+            p_str += r'''}\phantom{+})& \times '''
+            # Bin widths:
+            p_str += f'{bin_width:5.3f}'
+            # Value of this line:
+            p_str += r''' = &'''
+            value_here = (
+                (value_treated - value_no_treatment) * bin_width
+            )
+            cumulative_changes += value_here
+
+            if value_here>=0:
+                # Add sneaky + for alignment
+                p_str += r'\phantom{+}'
+            p_str += f'{value_here:5.3f}'
+            # Next line:
+            p_str += '\\\\'
+
+            # Add to the big string: 
+            big_p_str += p_str 
+
+    # Add total beneath the rest: 
+    # big_p_str += r'''& & & & & & -----\\\\'''
+    big_p_str += r'''\hline''' 
+    big_p_str += r'''& & & & \mathrm{Total}: &'''
+
+    if cumulative_changes>=0:
+        # Add sneaky + for alignment
+        big_p_str += r'\phantom{+}'
+    big_p_str += f'{cumulative_changes:5.3f}\\\\'
+    big_p_str += r'''\end{align*}'''
+
+    return big_p_str 
+
 def do_prob_bars( 
         dist_dict,
         mRS_dist_mix, weighted_added_utils,
         mRS_list_time_input_treatment, 
-        mRS_list_no_treatment, time_input
+        mRS_list_no_treatment, time_input, key_str=''
         ):
     # ----- Plot probability distributions ----- 
-    st.subheader('The effect of treatment on mRS')
 
-    fig_bars_change, axs = plt.subplots(2, 1, figsize=(8,8))
-    ax_bars = axs[0] 
-    ax_util_change = axs[1]
+    fig_bars_change, ax_bars = plt.subplots(figsize=(8,2))
 
     bar_height = 0.5
     y_list = [2, 1, 0]
@@ -180,74 +261,86 @@ def do_prob_bars(
          ], 
         ax_bars, time_input, y_list, bar_height)
 
-    ylim_util_change = (
-        plot_utility_chart(ax_util_change, mRS_dist_mix, weighted_added_utils) )
+    # ylim_util_change = (
+    #     plot_utility_chart(ax_util_change, mRS_dist_mix, weighted_added_utils) )
 
 
-    if st.checkbox('Mark changes between treated and no treatment'):
-        top_of_bottom_bar = y_list[2]+bar_height*0.5
-        bottom_of_top_bar = y_list[1]-bar_height*0.5
-        for prob in mRS_dist_mix:
-            ax_bars.vlines(prob, bottom_of_top_bar, top_of_bottom_bar,
-                color='silver', linestyle='-', zorder=0)
-            ax_util_change.axvline(prob, color='silver', zorder=0)
+    # if st.checkbox('Mark changes between treated and no treatment',
+    #                 key='checkbox_mark_lines_'+key_str):
+    #     top_of_bottom_bar = y_list[2]+bar_height*0.5
+    #     bottom_of_top_bar = y_list[1]-bar_height*0.5
+    #     for prob in mRS_dist_mix:
+    #         ax_bars.vlines(prob, bottom_of_top_bar, top_of_bottom_bar,
+    #             color='silver', linestyle='-', zorder=0)
+    #         ax_util_change.axvline(prob, color='silver', zorder=0)
 
 
-    if st.checkbox('Add mRS colours to utility line'):
-        draw_mRS_colours_on_utility_chart(
-            mRS_dist_mix, weighted_added_utils, 
-            mRS_list_time_input_treatment, mRS_list_no_treatment, 
-            ylim_util_change, ax_util_change
-            )
-        write_text_about_utility_colours = 1
-    else:
-        write_text_about_utility_colours = 0
+    # if st.checkbox('Add mRS colours to utility line',
+    #                 key='checkbox_mRS_colours_'+key_str):
+    #     draw_mRS_colours_on_utility_chart(
+    #         mRS_dist_mix, weighted_added_utils, 
+    #         mRS_list_time_input_treatment, mRS_list_no_treatment, 
+    #         ylim_util_change, ax_util_change
+    #         )
+    #     write_text_about_utility_colours = 1
+    # else:
+    #     write_text_about_utility_colours = 0
 
 
     # Extend xlims slightly to not cut off bar border colour. 
-    for ax in axs:
+    for ax in [ax_bars]:
         ax.set_xlim(-5e-3, 1.0+5e-3)
         ax.set_xlabel('Probability')
         ax.set_xticks(np.arange(0,1.01,0.2))
         ax.set_xticks(np.arange(0,1.01,0.05), minor=True)
 
 
+    time_input_str = f'{time_input//60}hr {time_input%60}min'
+    st.write('We can draw some of the data from the table in the "mRS distributions at the treatment times" section above to create these bar charts of mRS probability distributions:')
+
     st.pyplot(fig_bars_change)
 
-    st.write('When the value of "probability" lands in different mRS bins between the two distributions, the graph has a slope. When the mRS values are the same, the graph is flat.')
-    if write_text_about_utility_colours>0:
-        st.write('On either side of the cumulative weighted added utility (the solid black line), the two mRS distributions are shown. Immediately above the line is the treated distribution, and immediately below is the "no treatment" distribution.')
+    st.write('The weighted mean utility and mRS is calculated using those regions of the chart where the mRS is different between the "No treatment" and "Treated at '+time_input_str+'" bars.')
+
+    # st.write('When the value of "probability" lands in different mRS bins between the two distributions, the graph has a slope. When the mRS values are the same, the graph is flat.')
+    # if write_text_about_utility_colours>0:
+    #     st.write('On either side of the cumulative weighted added utility (the solid black line), the two mRS distributions are shown. Immediately above the line is the treated distribution, and immediately below is the "no treatment" distribution.')
 
 
-    checkbox_util_sums = st.checkbox('Show sums for the cumulative weighted mRS') 
-    if checkbox_util_sums:
-        st.latex(r'''\textcolor{#0072B2}{Hello}''')
-        st.latex(r'''\textcolor{#009E73}{Hello}''')
-        st.latex(r'''\textcolor{#D55E00}{Hello}''')
-        st.latex(r'''\textcolor{#CC79A7}{Hello}''')
-        st.latex(r'''\textcolor{#F0E442}{Hello}''')
-        st.latex(r'''\textcolor{#56B4E9}{Hello}''')
-        st.latex(r'''\textcolor{DarkSlateGray}{Hello}''')
-    
+    st.write('Sums for the cumulative weighted utility:') 
+    big_p_str = build_latex_cumsum_string(
+            weighted_added_utils, 
+            mRS_list_time_input_treatment,
+            mRS_list_no_treatment,
+            mRS_dist_mix,
+            colour_list, 
+            utility_weights,
+            util=True)
+    st.latex(big_p_str)
 
-    checkbox_mRS_sums = st.checkbox('Show sums for the cumulative weighted utility') 
-    if checkbox_mRS_sums:
-        st.latex(r'''\textcolor{#0072B2}{Hello}''')
-        st.latex(r'''\textcolor{#009E73}{Hello}''')
-        st.latex(r'''\textcolor{#D55E00}{Hello}''')
-        st.latex(r'''\textcolor{#CC79A7}{Hello}''')
-        st.latex(r'''\textcolor{#F0E442}{Hello}''')
-        st.latex(r'''\textcolor{#56B4E9}{Hello}''')
-        st.latex(r'''\textcolor{DarkSlateGray}{Hello}''')
+    # Check:
+    # st.write(weighted_added_utils[-1])
+
+    st.write('Sums for the cumulative weighted mRS:') 
+    big_p_str = build_latex_cumsum_string(
+            weighted_added_utils, 
+            mRS_list_time_input_treatment,
+            mRS_list_no_treatment,
+            mRS_dist_mix,
+            colour_list, 
+            utility_weights,
+            util=False)
+    st.latex(big_p_str)
+
 
 
 def compare_probs_with_time(dict1, dict2):
     # Plot probs with time 
     st.subheader('Probability variation with time')
 
-    st.write('The mRS probability distributions are a concoction of various sources of data. The full details are given in [this document: "mRS distributions..."](https://github.com/samuel-book/stroke_outcome)')
+    st.write('The mRS probability distributions are a concoction of various sources of data. The full details are given in [this document: "mRS distributions..."](https://github.com/samuel-book/stroke_outcome/blob/main/mRS_datasets_full.ipynb)')
     
-    st.write('The boundaries between the mRS bins follow the shape of a logistic function. For details, see [this document: "Mathematics..."](https://github.com/samuel-book/stroke_outcome).')
+    st.write('The boundaries between the mRS bins follow the shape of a logistic function. For details, see [this document: "Mathematics..."](https://github.com/samuel-book/stroke_outcome/blob/main/mRS_outcomes_maths.ipynb).')
 
     do_probs_with_time(
         dict1['time_no_effect'], dict1['A_list'], dict2['b_list'], 
@@ -583,6 +676,10 @@ with cumulative_expander:
 
     with tab1:
         # nLVO IVT 
+
+        st.subheader('The effect of treatment on mRS')
+        st.subheader('Case 1')
+        # Case 1: 
         mRS_dist_mix, weighted_added_utils, mRS_list_time_input_treatment, mRS_list_no_treatment = \
             find_added_utility_between_dists(
                 nlvo_ivt_case1_dict['dist_cumsum_time_input_treatment'], 
@@ -594,14 +691,99 @@ with cumulative_expander:
             weighted_added_utils,
             mRS_list_time_input_treatment, 
             mRS_list_no_treatment,
-            case1_time_to_ivt)
+            case1_time_to_ivt,
+            key_str = 'nLVO_IVT_case1')
+
+        st.subheader('Case 2')
+        # Case 2: 
+        mRS_dist_mix, weighted_added_utils, mRS_list_time_input_treatment, mRS_list_no_treatment = \
+            find_added_utility_between_dists(
+                nlvo_ivt_case2_dict['dist_cumsum_time_input_treatment'], 
+                nlvo_ivt_case2_dict['dist_cumsum_no_treatment']
+                )
+        do_prob_bars( 
+            nlvo_ivt_case2_dict,
+            mRS_dist_mix, 
+            weighted_added_utils,
+            mRS_list_time_input_treatment, 
+            mRS_list_no_treatment,
+            case2_time_to_ivt,
+            key_str = 'nLVO_IVT_case2')
+
 
         #compare_probs_with_time(nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
     with tab2:
-        pass 
+        # LVO IVT 
+        st.subheader('The effect of treatment on mRS')
+        st.subheader('Case 1')
+        # Case 1:
+        mRS_dist_mix, weighted_added_utils, mRS_list_time_input_treatment, mRS_list_no_treatment = \
+            find_added_utility_between_dists(
+                lvo_ivt_case1_dict['dist_cumsum_time_input_treatment'], 
+                lvo_ivt_case1_dict['dist_cumsum_no_treatment']
+                )
+        do_prob_bars( 
+            lvo_ivt_case1_dict,
+            mRS_dist_mix, 
+            weighted_added_utils,
+            mRS_list_time_input_treatment, 
+            mRS_list_no_treatment,
+            case1_time_to_ivt,
+            key_str = 'LVO_IVT_case1') 
+
+
+        st.subheader('Case 2')
+        # Case 2: 
+        mRS_dist_mix, weighted_added_utils, mRS_list_time_input_treatment, mRS_list_no_treatment = \
+            find_added_utility_between_dists(
+                lvo_ivt_case2_dict['dist_cumsum_time_input_treatment'], 
+                lvo_ivt_case2_dict['dist_cumsum_no_treatment']
+                )
+        do_prob_bars( 
+            lvo_ivt_case2_dict,
+            mRS_dist_mix, 
+            weighted_added_utils,
+            mRS_list_time_input_treatment, 
+            mRS_list_no_treatment,
+            case2_time_to_ivt,
+            key_str = 'LVO_IVT_case2')
+
         #compare_probs_with_time(lvo_ivt_case1_dict, lvo_ivt_case2_dict)
     with tab3:
-        pass
+        # LVO MT 
+        st.subheader('The effect of treatment on mRS')
+        st.subheader('Case 1')
+        # Case 1:
+        mRS_dist_mix, weighted_added_utils, mRS_list_time_input_treatment, mRS_list_no_treatment = \
+            find_added_utility_between_dists(
+                lvo_mt_case1_dict['dist_cumsum_time_input_treatment'], 
+                lvo_mt_case1_dict['dist_cumsum_no_treatment']
+                )
+        do_prob_bars( 
+            lvo_mt_case1_dict,
+            mRS_dist_mix, 
+            weighted_added_utils,
+            mRS_list_time_input_treatment, 
+            mRS_list_no_treatment,
+            case1_time_to_mt,
+            key_str = 'LVO_MT_case1') 
+
+
+        st.subheader('Case 2')
+        # Case 2: 
+        mRS_dist_mix, weighted_added_utils, mRS_list_time_input_treatment, mRS_list_no_treatment = \
+            find_added_utility_between_dists(
+                lvo_mt_case2_dict['dist_cumsum_time_input_treatment'], 
+                lvo_mt_case2_dict['dist_cumsum_no_treatment']
+                )
+        do_prob_bars( 
+            lvo_mt_case2_dict,
+            mRS_dist_mix, 
+            weighted_added_utils,
+            mRS_list_time_input_treatment, 
+            mRS_list_no_treatment,
+            case2_time_to_mt,
+            key_str = 'LVO_MT_case2')
         #compare_probs_with_time(lvo_mt_case1_dict, lvo_mt_case2_dict)
     with tab4:
         st.write('Nothing to see here.')
@@ -642,19 +824,12 @@ with total_expander:
         mean_util_change_case2,
         )
 
-    st.latex(r'\times')
-    A = 34.222222
-    st.latex(r'''
-    a \times ar\% + a r^2 + a r^3 + \cdots + a r^{n-1} =
-    \sum_{k=0}^{n-1} ar^k =
-    a \left(\frac{1-r^{n}}{1-r}\right)
-    ''' + f'{A:3.2f}' + r'''ae''')
-
-    st.latex(r'''
-    \begin{align*}
-    & a_{ijk} = 2 \\
-    &(\mathrm{\textcolor{SkyBlue}{because}} ||V_1-V_2|| = \max_{i \in [d]}|V^i_1 - V^i_2|)
-    \end{align*}
-    ''')
 
 
+    # st.latex(r'''\textcolor{#0072B2}{Hello}''')
+    # st.latex(r'''\textcolor{#009E73}{Hello}''')
+    # st.latex(r'''\textcolor{#D55E00}{Hello}''')
+    # st.latex(r'''\textcolor{#CC79A7}{Hello}''')
+    # st.latex(r'''\textcolor{#F0E442}{Hello}''')
+    # st.latex(r'''\textcolor{#56B4E9}{Hello}''')
+    # st.latex(r'''\textcolor{DarkSlateGray}{Hello}''')
