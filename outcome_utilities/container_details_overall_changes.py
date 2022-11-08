@@ -30,7 +30,8 @@ def main(args):
     mean_util_dict_lvo_mt_case2,
     mean_util_change_case2) = args
 
-    st.subheader('__Case 1__: mRS')
+    st.subheader('__Case 1__')
+    st.write('Change in mRS:')
     print_change_sums(
         prop_dict, 
         mean_mRS_dict_nlvo_ivt_case1,
@@ -40,8 +41,7 @@ def main(args):
     # st.text('Check:' + f'{mean_mRS_change_case1:22.2f}')
     st.text(' ')
 
-    # with cols_metric[0]:
-    st.subheader('__Case 1__: Utility')
+    st.write('Change in utility:')
     print_change_sums(
         prop_dict, 
         mean_util_dict_nlvo_ivt_case1,
@@ -53,8 +53,8 @@ def main(args):
     st.text(' ')
 
 
-    # with cols_metric[1]:
-    st.subheader('__Case 2__: mRS')
+    st.subheader('__Case 2__')
+    st.write('Change in mRS:')
     print_change_sums(
         prop_dict, 
         mean_mRS_dict_nlvo_ivt_case2,
@@ -65,8 +65,7 @@ def main(args):
     st.text(' ')
 
 
-    # with cols_metric[1]:
-    st.subheader('__Case 2__: Utility')
+    st.write('Change in utility:')
     print_change_sums(
         prop_dict, 
         mean_util_dict_nlvo_ivt_case2,

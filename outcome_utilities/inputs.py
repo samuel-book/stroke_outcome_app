@@ -31,11 +31,11 @@ def inputs_pathway():
         min_value=0, max_value=600, value=30, step=5)
     travel_to_mt = pathway_cols[1].number_input(
         label=(emoji_text_dict['travel_to_mt']
-               + ' Travel time from onset location to MT centre'), 
+               + ' Travel time from onset location to IVT+MT centre'), 
         min_value=0, max_value=600, value=50, step=5)
     travel_ivt_to_mt = pathway_cols[1].number_input(
         label=(emoji_text_dict['travel_ivt_to_mt']
-               + ' Travel time between IVT and MT centres'), 
+               + ' Travel time between IVT and IVT+MT centres'), 
         min_value=0, max_value=600, value=50, step=5)
 
     # Column 3
@@ -45,7 +45,7 @@ def inputs_pathway():
         min_value=0, max_value=600, value=30, step=5)
     mt_arrival_to_treatment = pathway_cols[2].number_input(
         label=(emoji_text_dict['mt_arrival_to_treatment'] + 
-               ' Delay between arrival at MT centre and MT treatment'), 
+               ' Delay between arrival at IVT+MT centre and MT treatment'), 
         min_value=0, max_value=600, value=90, step=5)
     # ----- end of inputs ----- 
 
@@ -133,22 +133,22 @@ def inputs_patient_population():
             # form_cols = st.columns(5) 
             prop_nlvo_treated_ivt_only = 0.01 * form_cols[0].number_input(
                 label=emoji_text_dict['ivt_arrival_to_treatment']+' nLVO given IVT', 
-                min_value=0.0, max_value=100.0, value=15.5, step=0.1)
+                min_value=0.0, max_value=100.0, value=15.5, step=0.1, format='%3.1f')
             prop_lvo_treated_ivt_only = 0.01 * form_cols[1].number_input(
                 label=emoji_text_dict['ivt_arrival_to_treatment']+' LVO given IVT only', 
-                min_value=0.0, max_value=100.0, value=0.0, step=0.1)
+                min_value=0.0, max_value=100.0, value=0.0, step=0.1, format='%3.1f')
             prop_lvo_treated_ivt_mt = 0.01 * form_cols[1].number_input(
                 label=emoji_text_dict['mt_arrival_to_treatment']+' LVO given MT', 
-                min_value=0.0, max_value=100.0, value=28.6, step=0.1)
+                min_value=0.0, max_value=100.0, value=28.6, step=0.1, format='%3.1f')
             prop_ich_treated = 0.01 * form_cols[2].number_input(
                 label='ICH treated', 
-                min_value=0.0, max_value=100.0, value=0.0, step=0.1)
+                min_value=0.0, max_value=100.0, value=0.0, step=0.1, format='%3.1f')
             prop_lvo_mt_also_receiving_ivt = 0.01 * form_cols[1].number_input(
                 label=(
                     emoji_text_dict['ivt_arrival_to_treatment']+
                     emoji_text_dict['mt_arrival_to_treatment']+
                     ' LVO MT patients who also receive IVT'), 
-                min_value=0.0, max_value=100.0, value=85.0, step=0.1)
+                min_value=0.0, max_value=100.0, value=85.0, step=0.1, format='%3.1f')
                 
             submit_button = st.form_submit_button(label='Submit')
 

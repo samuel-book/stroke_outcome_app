@@ -121,7 +121,7 @@ nlvo_ivt_case2_dict, lvo_ivt_case2_dict, lvo_mt_case2_dict = \
 # ###########################
 st.header('Results')
 # ----- Show metric for +/- mRS and utility -----
-st.subheader('Changes in mRS and utility')
+# st.subheader('Changes in mRS and utility')
 import outcome_utilities.container_results_metrics
 outcome_utilities.container_results_metrics.main([
     # Case 1:
