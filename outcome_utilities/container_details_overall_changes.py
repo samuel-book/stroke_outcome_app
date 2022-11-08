@@ -155,9 +155,9 @@ def print_change_sums(
         big_p_str += r'\phantom{+}'
 
     if util==True:
-        big_p_str += f'{cumulative_changes:7.3f}\\\\'
+        big_p_str += f'{cumulative_changes:6.3f}\\\\'
     else:
-        big_p_str += f'{cumulative_changes:6.2f}\\\\'
+        big_p_str += f'{cumulative_changes:5.2f}\\\\'
     big_p_str += r'''\end{align*}'''
 
     st.latex(big_p_str)
@@ -169,6 +169,17 @@ def build_latex_combo_change_string(
 
     outcome_total = prop_type*prop_treated*outcome_change
 
+
+    # Round the total of the line to the same number of digits 
+    # as the printed total of the column, otherwise the sums 
+    # look incorrect. 
+    if util==True:
+        outcome_change = round(outcome_change, 3)
+        outcome_total = round(outcome_total, 3)
+    else:
+        outcome_change = round(outcome_change, 2)
+        outcome_total = round(outcome_total, 2)
+
     # To do: 
     outcome_total_orig = 0.0#np.NaN 
 
@@ -179,24 +190,16 @@ def build_latex_combo_change_string(
     if outcome_change == 0.0:
         outcome_change = 0.0
 
-    # Getting some weird behaviour in the rounding, e.g. 
-    # >>> f'{0.00750:6.3f}'
-    # ' 0.007'
-    # >>> f'{0.00850:6.3f}'
-    # ' 0.009'
-    # Only an issue for values exactly half-way between the rounded
-    # point. Best to ignore it... 
-
     # Add sneaky + for alignment: 
     p_str_change = r'\phantom{+}' if outcome_change>=0 else ''
     p_str_total = r'\phantom{+}' if outcome_total>=0 else ''
 
     if util==True:
-        p_str_change += f'{outcome_change:7.4f}'
-        p_str_total += f'{outcome_total:7.4f}'
-    else:
         p_str_change += f'{outcome_change:6.3f}'
         p_str_total += f'{outcome_total:6.3f}'
+    else:
+        p_str_change += f'{outcome_change:5.2f}'
+        p_str_total += f'{outcome_total:5.2f}'
 
     big_p_str += row_label 
     big_p_str += r''' & &'''

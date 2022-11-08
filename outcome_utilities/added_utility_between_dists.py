@@ -64,6 +64,11 @@ def find_added_utility_between_dists(mRS_dist1, mRS_dist2,
     # Weight the increases by the proportion of the mRS distribution
     # that they span: 
     weighted_added_utils = np.cumsum(added_utils * mRS_diff_mix)
+
+    # Round the distribution values to three decimal places 
+    # - might not add up to 1 afterwards, but saves apparent rounding
+    # errors in the printed utility and mRS change sums. 
+    mRS_dist_mix = np.round(mRS_dist_mix, 3)
     
     return mRS_dist_mix, weighted_added_utils, x1_list, x2_list
 

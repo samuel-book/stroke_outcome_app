@@ -195,6 +195,13 @@ def build_latex_cumsum_string(
     for i in range(1, len(weighted_added_utils)):
         if weighted_added_utils[i]-weighted_added_utils[i-1]!=0:
 
+
+            bin_width = mRS_dist_mix[i]-mRS_dist_mix[i-1]
+            # Add a tiny amount to prevent round-to-nearest-even 
+            # oddities when printing the values. 
+            bin_width += 1e-7
+            p_str_bin_width = f'{bin_width:6.3f}'
+
             if util==True:
                 value_treated = utility_weights[mRS_list_time_input_treatment[i]]
                 value_no_treatment = utility_weights[mRS_list_no_treatment[i]]
@@ -208,8 +215,6 @@ def build_latex_cumsum_string(
 
                 p_str_treated = f'{value_treated:1d}'
                 p_str_no_treatment = f'{value_no_treatment:1d}'
-            
-            bin_width = mRS_dist_mix[i]-mRS_dist_mix[i-1]
 
             p_str = ''
 
@@ -232,18 +237,29 @@ def build_latex_cumsum_string(
             p_str += p_str_no_treatment
             p_str += r'''} )& \times '''
             # Bin widths:
-            p_str += f'{bin_width:6.4f}'
+            p_str += p_str_bin_width
             # Value of this line:
             p_str += r''' = &'''
             value_here = (
                 (value_treated - value_no_treatment) * bin_width
             )
+            # Round the total of the line to the same number of digits 
+            # as the printed total of the column, otherwise the sums 
+            # look incorrect. 
+            if util==True:
+                value_here = round(value_here, 3)
+            else:
+                value_here = round(value_here, 2)
             cumulative_changes += value_here
+
 
             if value_here>=0:
                 # Add sneaky + for alignment
                 p_str += r'\phantom{+}'
-            p_str += f'{value_here:6.4f}'
+            if util==True:
+                p_str += f'{value_here:6.3f}'
+            else:
+                p_str += f'{value_here:5.2f}'
             # Next line:
             p_str += '\\\\'
 
@@ -255,10 +271,14 @@ def build_latex_cumsum_string(
     big_p_str += r'''\hline''' 
     big_p_str += r'''& & & & \mathrm{Total}: &'''
 
+
     if cumulative_changes>=0:
         # Add sneaky + for alignment
         big_p_str += r'\phantom{+}'
-    big_p_str += f'{cumulative_changes:6.3f}\\\\'
+    if util==True:
+        big_p_str += f'{cumulative_changes:6.3f}\\\\'
+    else:
+        big_p_str += f'{cumulative_changes:5.2f}\\\\'
     big_p_str += r'''\end{align*}'''
 
     return big_p_str 

@@ -78,8 +78,14 @@ def plot_emoji_on_timeline(ax, emoji_dict, time_dict, y=0, aspect=1.0, xlim=[], 
                 ext_xmax = x_plot + x_size*0.5 
                 ext_ymin = y+y_emoji_offset - y_size*0.5 
                 ext_ymax = y+y_emoji_offset + y_size*0.5 
-                ax.imshow(emoji_image, 
-                          extent=[ext_xmin, ext_xmax, ext_ymin, ext_ymax])
+
+                if 'ambulance' not in emoji:
+                    extent = [ext_xmin, ext_xmax, ext_ymin, ext_ymax]
+                else:
+                    # If it's the ambulance emoji, flip it horizontally: 
+                    extent = [ext_xmax, ext_xmin, ext_ymin, ext_ymax]
+
+                ax.imshow(emoji_image, extent=extent)
         # ax.annotate(emoji_dict[time_key], xy=(time_cumulative, y+y_emoji_offset))
 
 

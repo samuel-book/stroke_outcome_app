@@ -58,8 +58,27 @@ emoji_dict = dict(
     onset_to_ambulance_arrival = ':ambulance:',
     travel_to_ivt = ':hospital:', 
     travel_to_mt = ':hospital:', 
-    ivt_arrival_to_treatment = ':pill:',
+    ivt_arrival_to_treatment = ':syringe:',
     transfer_additional_delay = ':ambulance:',#':hourglass_flowing_sand:',
     travel_ivt_to_mt = ':hospital:',
-    mt_arrival_to_treatment = ':syringe:',
+    mt_arrival_to_treatment = ':wrench:',
 )
+
+emoji_text_dict = dict( 
+    # onset = ':thumbsdown:',
+    onset_to_ambulance_arrival = '\U0001f691',
+    travel_to_ivt = '\U0001f3e5',
+    travel_to_mt = '\U0001f3e5',
+    ivt_arrival_to_treatment = '\U0001f489',
+    transfer_additional_delay = '\U0001f691',
+    travel_ivt_to_mt = '\U0001f3e5',
+    mt_arrival_to_treatment = '\U0001f527',
+)
+
+# Other emoji: 💊
+
+# Emoji unicode reference:
+# 🔧 \U0001f527
+# 🏥 \U0001f3e5
+# 🚑 \U0001f691
+# 💉 \U0001f489

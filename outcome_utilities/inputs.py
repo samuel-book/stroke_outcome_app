@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd 
 
+from .fixed_params import emoji_text_dict
 from .probs_with_time import find_dists_at_chosen_time
 from .added_utility_between_dists import \
     find_added_utility_between_dists
@@ -15,29 +16,36 @@ def inputs_pathway():
     pathway_cols = st.columns(3)
     # Column 1 
     onset_to_ambulance_arrival = pathway_cols[0].number_input(
-        label='🚑 Onset to ambulance arrival',
+        label=(emoji_text_dict['onset_to_ambulance_arrival']
+               +' Onset to ambulance arrival'),
         min_value=0, max_value=600, value=60, step=5)
     transfer_additional_delay = pathway_cols[0].number_input(
-        label='🚑 Delay for transfer between centres',
+        label=(emoji_text_dict['onset_to_ambulance_arrival']
+               + ' Delay for transfer between centres'),
         min_value=0, max_value=600, value=60, step=5)
 
     # Column 2 
     travel_to_ivt = pathway_cols[1].number_input(
-        label='🏥 Travel time from onset location to IVT centre', 
+        label=(emoji_text_dict['travel_to_ivt']
+               + ' Travel time from onset location to IVT centre'), 
         min_value=0, max_value=600, value=30, step=5)
     travel_to_mt = pathway_cols[1].number_input(
-        label='🏥 Travel time from onset location to MT centre', 
+        label=(emoji_text_dict['travel_to_mt']
+               + ' Travel time from onset location to MT centre'), 
         min_value=0, max_value=600, value=50, step=5)
     travel_ivt_to_mt = pathway_cols[1].number_input(
-        label='🏥 Travel time between IVT and MT centres', 
+        label=(emoji_text_dict['travel_ivt_to_mt']
+               + ' Travel time between IVT and MT centres'), 
         min_value=0, max_value=600, value=50, step=5)
 
     # Column 3
     ivt_arrival_to_treatment = pathway_cols[2].number_input(
-        label='💊 Delay between arrival at either centre and IVT treatment', 
+        label=(emoji_text_dict['ivt_arrival_to_treatment'] +
+               ' Delay between arrival at either centre and IVT treatment'), 
         min_value=0, max_value=600, value=30, step=5)
     mt_arrival_to_treatment = pathway_cols[2].number_input(
-        label='💉 Delay between arrival at MT centre and MT treatment', 
+        label=(emoji_text_dict['mt_arrival_to_treatment'] + 
+               ' Delay between arrival at MT centre and MT treatment'), 
         min_value=0, max_value=600, value=90, step=5)
     # ----- end of inputs ----- 
 
@@ -124,19 +132,22 @@ def inputs_patient_population():
             form_cols = st.columns(3) 
             # form_cols = st.columns(5) 
             prop_nlvo_treated_ivt_only = 0.01 * form_cols[0].number_input(
-                label='💊 nLVO given IVT', 
+                label=emoji_text_dict['ivt_arrival_to_treatment']+' nLVO given IVT', 
                 min_value=0.0, max_value=100.0, value=15.5, step=0.1)
             prop_lvo_treated_ivt_only = 0.01 * form_cols[1].number_input(
-                label='💊 LVO given IVT only', 
+                label=emoji_text_dict['ivt_arrival_to_treatment']+' LVO given IVT only', 
                 min_value=0.0, max_value=100.0, value=0.0, step=0.1)
             prop_lvo_treated_ivt_mt = 0.01 * form_cols[1].number_input(
-                label='💉 LVO given MT', 
+                label=emoji_text_dict['mt_arrival_to_treatment']+' LVO given MT', 
                 min_value=0.0, max_value=100.0, value=28.6, step=0.1)
             prop_ich_treated = 0.01 * form_cols[2].number_input(
                 label='ICH treated', 
                 min_value=0.0, max_value=100.0, value=0.0, step=0.1)
             prop_lvo_mt_also_receiving_ivt = 0.01 * form_cols[1].number_input(
-                label='💊💉 LVO MT patients who also receive IVT', 
+                label=(
+                    emoji_text_dict['ivt_arrival_to_treatment']+
+                    emoji_text_dict['mt_arrival_to_treatment']+
+                    ' LVO MT patients who also receive IVT'), 
                 min_value=0.0, max_value=100.0, value=85.0, step=0.1)
                 
             submit_button = st.form_submit_button(label='Submit')

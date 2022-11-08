@@ -1,5 +1,7 @@
 import streamlit as st 
 
+from .fixed_params import emoji_text_dict
+
 def main(args):
 
     (
@@ -25,10 +27,12 @@ def main(args):
     met_col1.subheader('--- Case 1 ---')
 
     met_col1.write(
-        f'💊 Time to IVT: {case1_time_to_ivt//60}hr {case1_time_to_ivt%60}min.'
+        emoji_text_dict['ivt_arrival_to_treatment'] +
+        f' Time to IVT: {case1_time_to_ivt//60}hr {case1_time_to_ivt%60}min.'
         )
     met_col1.write(
-        f'💉 Time to MT: {case1_time_to_mt//60}hr {case1_time_to_mt%60}min.'
+        emoji_text_dict['mt_arrival_to_treatment'] +
+        f' Time to MT: {case1_time_to_mt//60}hr {case1_time_to_mt%60}min.'
         )
     met_col1.write('-'*20)
 
@@ -47,10 +51,12 @@ def main(args):
     met_col2.subheader('--- Case 2 ---')
 
     met_col2.write(
-        f'💊 Time to IVT: {case2_time_to_ivt//60}hr {case2_time_to_ivt%60}min.'
+        emoji_text_dict['ivt_arrival_to_treatment'] + 
+        f' Time to IVT: {case2_time_to_ivt//60}hr {case2_time_to_ivt%60}min.'
         )
     met_col2.write(
-        f'💉 Time to MT: {case2_time_to_mt//60}hr {case2_time_to_mt%60}min.'
+        emoji_text_dict['mt_arrival_to_treatment'] +
+        f' Time to MT: {case2_time_to_mt//60}hr {case2_time_to_mt%60}min.'
         )
     met_col2.write('-'*20)
 
