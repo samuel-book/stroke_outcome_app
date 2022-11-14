@@ -10,11 +10,14 @@ import streamlit as st
 st.set_page_config(
     page_title='Stroke outcome modelling',
     page_icon=':ambulance:',
-    layout='wide')
+    # layout='wide'
+    )
 
 st.title('Stroke outcome modelling')
+
 st.header('How to use this')
-st.write('select stuff on the left sidebar')
-# st.subheader('test')
-st.write('Emoji! :ambulance: :hospital: :pill: :syringe: :hourglass_flowing_sand: :crystal_ball: :ghost: :skull: :thumbsup: :thumbsdown:' )
+st.write('Go to the interactive demo in the left sidebar')
+
+st.header('modified Rankin Scale (mRS) and utility')
+st.write('To do - add descriptions')
 

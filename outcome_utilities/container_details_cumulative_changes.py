@@ -131,6 +131,16 @@ def do_prob_bars(
 
     st.write('The weighted mean utility and mRS is calculated using those regions of the chart where the mRS is different between the "No treatment" and "Treated at '+time_input_str+'" bars.')
 
+
+    st.write('Sums for the cumulative weighted mRS:') 
+    big_p_str = build_latex_cumsum_string(
+            weighted_added_utils, 
+            mRS_list_time_input_treatment,
+            mRS_list_no_treatment,
+            mRS_dist_mix,
+            util=False)
+    st.latex(big_p_str)
+
     st.write('Sums for the cumulative weighted utility:') 
     big_p_str = build_latex_cumsum_string(
             weighted_added_utils, 
@@ -142,15 +152,6 @@ def do_prob_bars(
 
     # Check:
     # st.write(weighted_added_utils[-1])
-
-    st.write('Sums for the cumulative weighted mRS:') 
-    big_p_str = build_latex_cumsum_string(
-            weighted_added_utils, 
-            mRS_list_time_input_treatment,
-            mRS_list_no_treatment,
-            mRS_dist_mix,
-            util=False)
-    st.latex(big_p_str)
 
 
     

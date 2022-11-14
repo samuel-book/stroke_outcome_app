@@ -89,6 +89,7 @@ def calculate_mean_changes(
         mean_mRS_time_input_treatment - mean_mRS_no_treatment)
     mean_mRS_diff_pre_stroke = (
         mean_mRS_time_input_treatment - mean_mRS_pre_stroke)
+        
     # Gather:
     mean_mRS_dict = dict(
         pre_stroke = mean_mRS_pre_stroke,
@@ -111,6 +112,7 @@ def calculate_mean_changes(
         mean_utility_time_input_treatment - mean_utility_no_treatment)
     mean_utility_diff_pre_stroke = (
         mean_utility_time_input_treatment - mean_utility_pre_stroke)
+
     # Gather:
     mean_util_dict = dict(
         pre_stroke = mean_utility_pre_stroke,
