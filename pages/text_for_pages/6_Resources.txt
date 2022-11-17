@@ -1,0 +1,12 @@
+# To be printed as markdown on the "Resources" page. 
+# ---------------------------------------------------------------------
+
+# Resources 
+
+## About the method 
+
+An online book containing all of the detail about the methods used in the stroke outcome modelling and their results is available [here](https://samuel-book.github.io/stroke_outcome/intro.html). 
+
+## About the app  
+
+The code behind this app is written in `python3` and the app itself is deployed using `streamlit`, which is a free service for hosting [python web apps](https://streamlit.io/). 

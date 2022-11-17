@@ -2,14 +2,29 @@ import streamlit as st
 import numpy as np
 import pandas as pd 
 
-from .fixed_params import emoji_text_dict
+from .fixed_params import emoji_text_dict, utility_weights
 from .probs_with_time import find_dists_at_chosen_time
 from .added_utility_between_dists import \
     find_added_utility_between_dists
 
 
-# Utility for each mRS:
-utility_weights = np.array([0.97, 0.88, 0.74, 0.55, 0.20, -0.19, 0.00])
+def write_text_from_file(filename, head_lines_to_skip=0):
+    """
+    Write text from 'filename' into streamlit.
+    Skip a few lines at the top of the file using head_lines_to_skip. 
+    """
+    # Open the file and read in the contents, 
+    # skipping a few lines at the top if required. 
+    with open(filename, 'r', encoding="utf-8") as f:
+        text_to_print = f.readlines()[head_lines_to_skip:]
+
+    # Turn the list of all of the lines into one long string
+    # by joining them up with an empty '' string in between each pair. 
+    text_to_print = ''.join(text_to_print)
+
+    # Write the text in streamlit. 
+    st.markdown(f"""{text_to_print}""")
+
 
 def inputs_pathway():
     # All fixed times have units of minutes

@@ -1,0 +1,15 @@
+# To be printed as markdown on the "The SAMueL-2 project" page. 
+# ---------------------------------------------------------------------
+
+# SAMueL-2: Stroke Audit and Machine Learning 2.
+
+The stroke outcome models are part of SAMueL-2, (Stroke Audit and Machine Learning 2). More details about SAMueL-2 generally are available at the [online book](https://samuel-book.github.io/samuel-2/), and our published papers, presentations and other useful documents are available at [this GitHub repository](https://github.com/samuel-book/samuel-2-reference). 
+
+For an overview on SAMueL and our results so far: 
++ Article on SAMueL-1 results on [machine learning for thrombolysis](https://github.com/samuel-book/samuel-2-reference/blob/main/samuel_1_papers_report/2022_stroke_paper.pdf). Allen M, James C, Frost J, Liabo K, Pearn K, Monks T, et al. Using simulation and machine learning to maximise the benefit of intravenous thrombolysis in acute stroke in England and Wales: the SAMueL modelling and qualitative study. Health Soc Care Deliv Res 2022;10(31) [https://doi.org/10.3310/GVZL5699](https://doi.org/10.3310/GVZL5699).
+
+
+SAMueL-2 is part of the Peninsula Collaboration for Health Operational Research and Data Science [PenCHORD](https://arc-swp.nihr.ac.uk/research-and-implementation/research-teams/penchord/).
+
+The stroke outcome model will also be used in other projects, including OPTIMIST (OPTimising IMplementation of Ischaemic Stroke Thrombectomy). 
+
