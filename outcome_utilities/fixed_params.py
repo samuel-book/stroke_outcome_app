@@ -1,5 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+
 
 def make_colour_list():
     """Define the colours for plotting mRS bins."""
@@ -25,25 +26,26 @@ def make_colour_list():
 
 def make_fig_legend(colour_list):
     """Plot a legend for the mRS colours."""
-    fig_legend = plt.figure(figsize=(6,2))
+    fig_legend = plt.figure(figsize=(6, 2))
     # Dummy data for legend:
     dummies = []
     for i in range(7):
         dummy = plt.bar(np.NaN, np.NaN, color=colour_list[i], edgecolor='k')
         dummies.append(dummy)
 
-    # Clear to remove automatic blank axis: 
+    # Clear to remove automatic blank axis:
     fig_legend.clear()
-    # Draw legend using dummy bars: 
-    fig_legend.legend([*dummies], range(7), 
-                loc='center',ncol=7, title='mRS colour scheme', 
-                ) 
+    # Draw legend using dummy bars:
+    fig_legend.legend(
+        [*dummies], range(7),
+        loc='center', ncol=7, title='mRS colour scheme',
+        )
     return fig_legend
 
 
 # Change default colour scheme:
 plt.style.use('seaborn-colorblind')
-colour_list = make_colour_list() 
+colour_list = make_colour_list()
 
 utility_weights = np.array(
     [0.97, 0.88, 0.74, 0.55, 0.20, -0.19, 0.00])
@@ -53,26 +55,26 @@ time_no_effect_ivt = int(6.3*60)   # minutes
 time_no_effect_mt = int(8*60)      # minutes
 
 # Define some emoji for various situations:
-emoji_dict = dict( 
-    # onset = ':thumbsdown:',
-    onset_to_ambulance_arrival = ':ambulance:',
-    travel_to_ivt = ':hospital:', 
-    travel_to_mt = ':hospital:', 
-    ivt_arrival_to_treatment = ':syringe:',
-    transfer_additional_delay = ':ambulance:',#':hourglass_flowing_sand:',
-    travel_ivt_to_mt = ':hospital:',
-    mt_arrival_to_treatment = ':wrench:',
+emoji_dict = dict(
+    # onset=':thumbsdown:',
+    onset_to_ambulance_arrival=':ambulance:',
+    travel_to_ivt=':hospital:',
+    travel_to_mt=':hospital:',
+    ivt_arrival_to_treatment=':syringe:',
+    transfer_additional_delay=':ambulance:',  # ':hourglass_flowing_sand:',
+    travel_ivt_to_mt=':hospital:',
+    mt_arrival_to_treatment=':wrench:',
 )
 
-emoji_text_dict = dict( 
-    # onset = ':thumbsdown:',
-    onset_to_ambulance_arrival = '\U0001f691',
-    travel_to_ivt = '\U0001f3e5',
-    travel_to_mt = '\U0001f3e5',
-    ivt_arrival_to_treatment = '\U0001f489',
-    transfer_additional_delay = '\U0001f691',
-    travel_ivt_to_mt = '\U0001f3e5',
-    mt_arrival_to_treatment = '\U0001f527',
+emoji_text_dict = dict(
+    # onset=':thumbsdown:',
+    onset_to_ambulance_arrival='\U0001f691',
+    travel_to_ivt='\U0001f3e5',
+    travel_to_mt='\U0001f3e5',
+    ivt_arrival_to_treatment='\U0001f489',
+    transfer_additional_delay='\U0001f691',
+    travel_ivt_to_mt='\U0001f3e5',
+    mt_arrival_to_treatment='\U0001f527',
 )
 
 # Other emoji: 💊

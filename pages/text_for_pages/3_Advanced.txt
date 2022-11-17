@@ -1,4 +1,6 @@
 # To be printed as markdown on the "Advanced Options" page. 
 # ---------------------------------------------------------------------
 
+# Advanced options
+
 (nothing to see here yet!)

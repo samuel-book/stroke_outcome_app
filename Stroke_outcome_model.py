@@ -1,5 +1,5 @@
 """
-Streamlit app for the stroke outcome model. 
+Streamlit app for the stroke outcome model.
 """
 
 # ----- Imports -----
@@ -15,5 +15,5 @@ st.set_page_config(
     # layout='wide'
     )
 
-write_text_from_file('pages/text_for_pages/1_Intro.txt', 
+write_text_from_file('pages/text_for_pages/1_Intro.txt',
                      head_lines_to_skip=4)

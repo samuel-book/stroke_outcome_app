@@ -1,43 +1,46 @@
 # To be printed as markdown on the landing page. 
-# This text is copied directly from the datasets notebook as of November 2022. 
+# This text is modified from the datasets notebook as of November 2022. 
 # ---------------------------------------------------------------------
 
 # Stroke outcome modelling
-## Predicting disability outcomes and utility after treatment of stroke with thrombolysis (IVT) or thrombectomy (MT)
+## Predicting disability outcomes and utility after treatment of stroke with thrombolysis or thrombectomy 
 
-In this app we describe how we estimate the spread of disability levels if we know the time after stroke symptoms began when a person was treated with either thrombolysis (IVT), a clot-busting medication, or thrombectomy (MT), the physical removal of a clot.
-The details behind the process are given fully in this online book: [https://samuel-book.github.io/stroke_outcome/intro.html](https://samuel-book.github.io/stroke_outcome/intro.html).
+In this app we describe how we estimate the change in disability levels for a patient population if we know the time between when stroke symptoms began and when treatment was received.
+The details behind the process are given in full in this online book: [https://samuel-book.github.io/stroke_outcome/intro.html](https://samuel-book.github.io/stroke_outcome/intro.html).
+
+Until now, modelling the outcome from stroke reperfusion treatment was a dichotomous affair, with a patient classified as either being disability free, or with stroke related disabilities. The method described here aims to provide a more granular disability outcome, describing the resulting disability as one of six levels (ranging from disability free, to death). 
+The outcomes across all patients in the population are averaged to find a single value for the expected benefit of treatment. 
 
 
-
-## How to use this app
-Go to the "Interactive demo" in the left sidebar.
-There you can change the patient population and the treatment times to see the resulting effect on mean population outcomes.
-
-To change between light mode and dark mode or to make the display wider, change the settings under the Menu in the top right of the screen.
 
 ## Background information 
-The methodology described here is for patients with an ischaemic stroke (a stroke that is caused by a clot). These patients can be further defined by the location of the clot: those with a large vessel occlusion (LVO); and those not with a large vessel occlusion (nLVO). Patients with an nLVO can be treated with thrombolysis (IVT), a clot-busting medication. Patients with an LVO can be treated with IVT and/or thrombectomy (MT), which physically removes the clot. The benefit received by the patient from either treatment (IVT and/or MT) are time dependent, such that the sooner they are administered, the better the outcome, with each treatment having no effect after a specified duration (6.3 hours for IVT, and 8 hours for MT). In other words, the sooner a patient recieves reperfusion treatment the fewer stroke related disabilities they could end up with.
 
-Until now, modelling the outcome from stroke reperfusion treatment was a dichotomous affair, with a patient classified as either being disability free, or with stroke related disabilities. The method described here aims to provide a more granular disability outcome, describing the resulting disability as one of six levels (ranging from disability free, to death).
+### Stroke types and treatments 
 
-This method calculates disability outcome estimates for three patient-treatment cohorts: 1) nLVO-IVT (patients with an nLVO that are treated with IVT), 2) LVO-IVT (patients with an LVO that are treated with IVT), 3) LVO-MT (patients with an LVO that are treated with MT). The result is provided as a distribution of disability (with six levels) following reperfusion treatment at any point between these two time stages: 1) receiving reperfusion treatment as soon as their stroke began (this will be referred to as time of stroke onset, and we will use the terminology “t = 0”), and 2) receiving reperfusion treatment at the duration after stroke onset where the treatment has no effect (this will be referred to as time of no effect, and we will use the terminology “t = No Effect”).
+Patients can have an ischaemic stroke, which is caused by a blood clot, or 
+a haemorrhaegic stroke, which is caused by a bleed in the brain. 
+We refer to the latter as an intra-cerebral haemorrhage (ICH). 
 
-The method is built using data from reperfusion treatment clinical trials (Lees et al. 2010, Emberson et al. 2014, Goyal et al. 2016, Fransen et al. 2016, and Hui et al. 2020) and 3 years worth of stroke admission data for England and Wales (Sentinel Stroke National Audit Programme, SSNAP) to define the distribution of disability for each of the three patient-treatment cohorts at the two time stages (t = 0 & t = No Effect), and we use interpolation to determine the disability distribution at any point inbetween.
+Patients with ischaemic stroke can be further defined by the location of the clot. The clot can be either: 
 
-Detailed methodology and code are found in the notebooks on derivation of mRS distributions and decay of effect over time.
++ a large-vessel occlusion (LVO), or 
++ a non-large-vessel occlusion (nLVO).
 
-## Modified Rankin Scale (mRS) and utility-weighted mRS
+There are two types of treatment available for ischaemic stroke. Both of these aim to achieve reperfusion, which is the restoration of the blood supply to the cut-off areas of the brain. 
+The treatments are intravenous thrombolysis (IVT), a clot-busting medication, and mechanical thrombectomy (MT), which physically removes the clot.
 
-Disability levels may be measured in various ways. In this project we are using the modified Rankin Scale (mRS). It is a commonly used scale for measuring the degree of disability or dependence in the daily activities of people who have suffered a stroke.
++ Patients with an LVO can be treated with IVT and/or MT. 
++ Patients with an nLVO can be treated with IVT. 
 
-The scale runs from 0-6, running from perfect health without symptoms to death.
+The benefit received by the patient from either treatment (IVT and/or MT) are time dependent, such that the sooner they are administered, the better the outcome, with each treatment having no effect after a specified duration (6.3 hours for IVT, and 8 hours for MT). In other words, the sooner a patient recieves reperfusion treatment the fewer stroke related disabilities they could end up with.
 
-In addition to mRS, we may calculate utility-weighted mRS (UW-mRS).
 
-UW-mRS incorporates both treatment effect and patient perceived quality of life as a single outcome measure for stroke trials.
 
-UW-mRS scores are based on a pooled analysis of 20,000+ patients, from Wang et al (2020). The Utilities for each mRS level are shown below.
+### Modified Rankin Scale (mRS) and utility-weighted mRS
+
+Disability levels may be measured in various ways. In this project we are using the modified Rankin Scale (mRS). It is a commonly used scale for measuring the degree of disability or dependence in the daily activities of people who have suffered a stroke. The scale runs from 0-6, running from perfect health without symptoms to death.
+
+In addition to mRS, we may calculate utility-weighted mRS (UW-mRS). UW-mRS incorporates both treatment effect and patient perceived quality of life as a single outcome measure for stroke trials. UW-mRS scores are based on a pooled analysis of 20,000+ patients, from Wang et al. (2020). 
 
 | mRS Score | Utility | Description |
 |---|---|---|
@@ -49,3 +52,31 @@ UW-mRS scores are based on a pooled analysis of 20,000+ patients, from Wang et a
 | 5 | -0.19 | Severe disability. Requires constant nursing care and attention, bedridden, incontinent. |
 | 6 | 0.00 | Dead. |
 
+
+## How to use this app
+
+Go to the "Interactive demo" in the left sidebar.
+There you can change the patient population and the treatment times to see the resulting effect on mean population outcomes.
+
+To change between light mode and dark mode or to make the display wider, change the settings under the Menu in the top right of the screen.
+
+
+### Acronym reference 
+
+
+| Acronym | Full name | 
+|---|---|
+| IVT | **I**ntra**v**enous **T**hrombolysis | 
+| MT | **M**echanical **T**hrombectomy | 
+| LVO | **L**arge-**v**essel **o**cclusion |
+| nLVO | **N**on-**l**arge-**v**essel **o**cclusion |
+| ICH | **I**ntra-**c**erebral **h**aemorrhage |
+| mRS | **m**odified **R**ankin **S**cale |
+
+
+### Limitations 
+The app currently only performs calculations for ischaemic stroke. Options for haemorrhaegic stroke are in place for future use but currently go unused.
+
+The timeline of defining the times to treatment by summing a series of other parameters are shown only for illustrative purposes. There are no plans to amend the timeline to include real-life factors such as time delays due to unavailability of hospital staff or beds. 
+
+Currently the changes in mRS and utility that are highlighted in "Results" do not always precisely match the equivalent values calculated in Part 3 of "Details of the Calculation". This is due to rounding errors and will be made consistent in a later version of the app.

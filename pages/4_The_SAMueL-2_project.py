@@ -9,6 +9,6 @@ st.set_page_config(
     page_icon=':ambulance:',
     # layout='wide'
     )
-   
-write_text_from_file('pages/text_for_pages/4_SAMueL.txt', 
+
+write_text_from_file('pages/text_for_pages/4_SAMueL.txt',
                      head_lines_to_skip=2)
