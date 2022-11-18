@@ -5,4 +5,15 @@
 
 Please cite this model as: 
 
-    To do 
+    @software{laws_2022_stroke_outcome_app,
+        author       = {Laws, Anna and Pearn, Kerry and Allen, Michael},
+        title        = {samuel2\_stroke\_outcome Streamlit app v1.0.0},
+        month        = nov,
+        year         = 2022,
+        publisher    = {Zenodo},
+        version      = {v1.0.0},
+        doi          = {10.5281/zenodo.7334036},
+        url          = {https://zenodo.org/record/7334036#.Y3dmy37P3wI}
+	}
+	
+[![DOI](https://zenodo.org/badge/536700822.svg)](https://zenodo.org/badge/latestdoi/536700822)
