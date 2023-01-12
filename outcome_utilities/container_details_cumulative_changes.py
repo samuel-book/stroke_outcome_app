@@ -1,8 +1,10 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly.express as px
+import pandas as pd
 
-from .fixed_params import make_fig_legend, colour_list, utility_weights
+from .fixed_params import colour_list, utility_weights
 from .added_utility_between_dists import find_added_utility_between_dists
 from .plot_dist import draw_horizontal_bar
 
@@ -20,10 +22,6 @@ def main(
         case1_time_to_mt,
         case2_time_to_mt
         ):
-
-    # ----- Add legend -----
-    fig_legend = make_fig_legend(colour_list)
-    st.pyplot(fig_legend)
 
     tab1, tab2, tab3, tab4 = st.tabs([
         'nLVO treated with IVT',
@@ -77,6 +75,11 @@ def draw_cumulative_changes(dist_dict, treatment_time, key_str=''):
             dist_dict['dist_cumsum_time_input_treatment'],
             dist_dict['dist_cumsum_no_treatment']
             )
+    st.write(
+        'We can draw some of the data from the table in the ' +
+        '"mRS distributions at the treatment times" section above ' +
+        'to create these bar charts of mRS probability distributions:'
+        )
     do_prob_bars(
         dist_dict,
         mRS_dist_mix,
@@ -86,6 +89,19 @@ def draw_cumulative_changes(dist_dict, treatment_time, key_str=''):
         treatment_time,
         key_str
         )
+    time_input_str = f'{treatment_time//60}hr {treatment_time%60}min'
+    st.write(
+        'The weighted mean utility and mRS is calculated using ' +
+        'those regions of the chart where the mRS is different ' +
+        'between the "No treatment" and "Treated at ' +
+        time_input_str + '" bars.'
+        )
+    write_latex_sums_for_weighted_mRS(
+            weighted_added_utils,
+            mRS_list_time_input_treatment,
+            mRS_list_no_treatment,
+            mRS_dist_mix
+            )
 
 
 def do_prob_bars(
@@ -94,13 +110,77 @@ def do_prob_bars(
         mRS_list_time_input_treatment,
         mRS_list_no_treatment, time_input, key_str=''
         ):
-    time_input_str = f'{time_input//60}hr {time_input%60}min'
-    st.write(
-        'We can draw some of the data from the table in the ' +
-        '"mRS distributions at the treatment times" section above ' +
-        'to create these bar charts of mRS probability distributions:'
+
+    dists = ['dist_no_treatment', 'dist_time_input_treatment', 'dist_pre_stroke']
+    cum_dists = ['dist_cumsum_time_input_treatment', 'dist_cumsum_no_treatment', 'dist_cumsum_pre_stroke']
+
+    y_labels = [
+        'No treatment',
+        ('Treated at \n' + f'{time_input//60}hr ' +
+         f'{time_input%60:02d}min'),
+        'Pre-stroke'
+        ]
+    # ^ keep formatting for e.g. 01 minutes in the middle bar
+    # otherwise the axis jumps about as the label changes size
+    # between "9 minutes" and "10 minutes" (extra character).
+
+    # Build a dataframe from the input probs and times:
+    # Build this data into a big dataframe for plotly.
+    # It wants each row in the table to have [mRS, year, hazard].
+
+    # The symbol for less than / equal to: ≤
+    mRS_list = range(7) # [  # 'mRS='+f'{i}'
+        # f'{i}' ] * 7
+    for d in range(3):
+        # Use dtype=object to keep the mixed strings (mRS),
+        # integers (years) and floats (hazards).
+        data_here = np.transpose(
+            np.array([
+                mRS_list,
+                [y_labels[d]] * len(mRS_list),
+                dist_dict[dists[d]],
+                dist_dict[cum_dists[d]],
+                ], dtype=object)
+            )
+
+        if d == 0:
+            # Start a new big array that will store all the data:
+            data_to_plot = data_here
+        else:
+            # Add this data to the existing big array:
+            data_to_plot = np.vstack((data_to_plot, data_here))
+
+
+    # Pop this data into a dataframe:
+    df_to_plot = pd.DataFrame(
+        data_to_plot,
+        columns=[
+            'mRS',
+            'Treatment time',
+            'Probability',
+            'Cumulative probability'
+            ]
         )
 
+    fig = px.bar(
+        df_to_plot,
+        x='Probability',
+        y='Treatment time',
+        color='mRS',
+        orientation='h',
+        color_discrete_sequence=colour_list
+        )
+
+    # Write to streamlit:
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def do_prob_bars_matplotlib(
+        dist_dict,
+        mRS_dist_mix, weighted_added_utils,
+        mRS_list_time_input_treatment,
+        mRS_list_no_treatment, time_input, key_str=''
+        ):
     # ----- Plot probability distributions -----
     fig_bars_change, ax_bars = plt.subplots(figsize=(8, 2))
 
@@ -115,7 +195,8 @@ def do_prob_bars(
          dist_dict['dist_cumsum_time_input_treatment'],
          dist_dict['dist_cumsum_no_treatment']
          ],
-        ax_bars, time_input, y_list, bar_height)
+        ax_bars, time_input, y_list, bar_height
+        )
 
     top_of_bottom_bar = y_list[2]+bar_height*0.5
     bottom_of_top_bar = y_list[1]-bar_height*0.5
@@ -133,13 +214,14 @@ def do_prob_bars(
 
     st.pyplot(fig_bars_change)
 
-    st.write(
-        'The weighted mean utility and mRS is calculated using ' +
-        'those regions of the chart where the mRS is different ' +
-        'between the "No treatment" and "Treated at ' +
-        time_input_str + '" bars.'
-        )
 
+
+def write_latex_sums_for_weighted_mRS(
+        weighted_added_utils,
+        mRS_list_time_input_treatment,
+        mRS_list_no_treatment,
+        mRS_dist_mix
+        ):
     st.write('Sums for the cumulative weighted mRS:')
     big_p_str = build_latex_cumsum_string(
             weighted_added_utils,
