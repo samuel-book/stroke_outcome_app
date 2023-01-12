@@ -2,6 +2,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+# Add an extra bit to the path if we need to.
+# Try importing something as though we're running this from the same
+# directory as the landing page.
+try:
+    emoji_image = plt.imread('./emoji/ambulance.png')
+    dir = './'
+except FileNotFoundError:
+    # If the import fails, add the landing page directory to path.
+    # Assume that the script is being run from the directory above
+    # the landing page directory, which is called
+    # stroke_outcome_app.
+    dir = 'stroke_outcome_app/'
+
+
 def plot_timeline(time_dict, ax=None, y=0, emoji_dict={}):
     label_dict = dict(
         onset='Onset',
@@ -77,7 +91,7 @@ def plot_emoji_on_timeline(
 
                 emoji = emoji_dict[time_key].strip(':')
                 # Import from file
-                emoji_image = plt.imread('./emoji/' + emoji + '.png')
+                emoji_image = plt.imread(dir + 'emoji/' + emoji + '.png')
                 ext_xmin = x_plot - x_size*0.5
                 ext_xmax = x_plot + x_size*0.5
                 ext_ymin = y+y_emoji_offset - y_size*0.5

@@ -8,6 +8,23 @@ from .added_utility_between_dists import \
     find_added_utility_between_dists
 
 
+# Add an extra bit to the path if we need to.
+# Try importing something as though we're running this from the same
+# directory as the landing page.
+try:
+    test_file = pd.read_csv(
+        './outcome_data/mrs_dist_probs_cumsum.csv',
+        index_col='Stroke type'
+        )
+    dir = './'
+except FileNotFoundError:
+    # If the import fails, add the landing page directory to path.
+    # Assume that the script is being run from the directory above
+    # the landing page directory, which is called
+    # stroke_outcome_app.
+    dir = 'stroke_outcome_app/'
+
+
 def write_text_from_file(filename, head_lines_to_skip=0):
     """
     Write text from 'filename' into streamlit.
@@ -15,8 +32,12 @@ def write_text_from_file(filename, head_lines_to_skip=0):
     """
     # Open the file and read in the contents,
     # skipping a few lines at the top if required.
-    with open(filename, 'r', encoding="utf-8") as f:
-        text_to_print = f.readlines()[head_lines_to_skip:]
+    try:
+        with open(filename, 'r', encoding="utf-8") as f:
+            text_to_print = f.readlines()[head_lines_to_skip:]
+    except FileNotFoundError:
+        with open('stroke_outcome_app/' + filename, 'r', encoding="utf-8") as f:
+            text_to_print = f.readlines()[head_lines_to_skip:]
 
     # Turn the list of all of the lines into one long string
     # by joining them up with an empty '' string in between each pair.
@@ -202,10 +223,10 @@ def find_mRS_dists_from_file(occlusion_str, treatment_str):
     """
     # Load mRS distributions from file:
     mrs_dists_cumsum = pd.read_csv(
-        './outcome_data/mrs_dist_probs_cumsum.csv',
+        dir + 'outcome_data/mrs_dist_probs_cumsum.csv',
         index_col='Stroke type')
     mrs_dists_bins = pd.read_csv(
-        './outcome_data/mrs_dist_probs_bins.csv',
+        dir + 'outcome_data/mrs_dist_probs_bins.csv',
         index_col='Stroke type')
 
     # Build the names of the dists that we need from these files
