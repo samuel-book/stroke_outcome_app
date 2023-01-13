@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 # Try importing something as though we're running this from the same
 # directory as the landing page.
 try:
-    from outcome_utilities.inputs import inputs_patient_population
+    from outcome_utilities.fixed_params import page_setup
 except ModuleNotFoundError:
     # If the import fails, add the landing page directory to path.
     # Assume that the script is being run from the directory above
@@ -31,7 +31,7 @@ from outcome_utilities.inputs import \
 from outcome_utilities.plot_timeline import \
     make_timeline_plot
 from outcome_utilities.fixed_params import \
-    colour_list, emoji_dict, utility_weights
+    page_setup, colour_list, emoji_dict, utility_weights
 from outcome_utilities.main_calculations import \
     find_dist_dicts, find_outcome_dicts
 # Containers:
@@ -45,13 +45,8 @@ def main():
     # ###########################
     # ##### START OF SCRIPT #####
     # ###########################
-    # ----- Page setup -----
-    # Set page to widescreen must be first call to st.
-    st.set_page_config(
-        page_title='Stroke outcome modelling',
-        page_icon=':ambulance:',
-        # layout='wide'
-        )
+
+    page_setup()
 
     st.markdown('# Interactive demo')
 

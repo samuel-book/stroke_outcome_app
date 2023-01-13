@@ -1,5 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import streamlit as st
+
+
+def page_setup():
+    # The following options set up the display in the tab in your
+    # browser.
+    # Set page to widescreen must be first call to st.
+    st.set_page_config(
+        page_title='Stroke outcome modelling',
+        page_icon=':ambulance:',
+        # layout='wide'
+        )
 
 
 def make_colour_list():
