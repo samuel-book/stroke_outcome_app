@@ -177,7 +177,7 @@ def do_prob_bars(
         traceorder='reversed',  # Show mRS=0 on left
         # Location:
         x=1.0,
-        y=1.2,
+        y=1.3,
         yanchor='bottom',
         xanchor='right',
         # Remove interactive legend (clicking to highlight or hide):
