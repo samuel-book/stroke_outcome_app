@@ -33,8 +33,8 @@ def make_timeline_plot(time_dicts):
         )
 
     fig = go.Figure()
-    x_vals = [0, 1]
-    label_offset = 0.4
+    x_vals = [0, 1.2]
+    label_offset = 0.6
     under_offset = -0.3
     emoji_offset = 0.1
 

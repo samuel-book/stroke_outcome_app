@@ -27,11 +27,12 @@ except ModuleNotFoundError:
 
 # Custom functions:
 from outcome_utilities.inputs import \
-    inputs_patient_population, inputs_pathway, write_text_from_file
+    inputs_patient_population, inputs_pathway, write_text_from_file, \
+    inputs_patient_population_advanced
 from outcome_utilities.plot_timeline import \
     make_timeline_plot
 from outcome_utilities.fixed_params import \
-    page_setup, colour_list, emoji_dict, utility_weights
+    page_setup, colour_list, emoji_dict, utility_weights, emoji_text_dict
 from outcome_utilities.main_calculations import \
     find_dist_dicts, find_outcome_dicts
 # Containers:
@@ -64,37 +65,82 @@ def main():
     # ###########################
 
     with st.sidebar:
-        st.header('Setup')
-
+        st.markdown('# Setup')
         # ----- Population parameters -----
-        st.subheader('Patient population')
-        st.warning(
-            ':warning: Currently the ICH option ' +
-            'does not impact the change in mRS or utility.'
-            )
-        prop_dict = inputs_patient_population()
+        st.markdown('## Patient population')
+        # Put the summary info in here later:
+        container_summary_population = st.container()
+
+        with st.expander('Stroke types'):
+            st.warning(
+                ':warning: Currently the ICH option ' +
+                'does not impact the change in mRS or utility.'
+                )
+            prop_dict = inputs_patient_population()
+        
+        with st.expander('Advanced options'):
+            prop_dict = inputs_patient_population_advanced(prop_dict)
+        
+        treated_pop_perc = 100.0*prop_dict['treated_population']
+
+        # Now write info in the box from earlier.
+        with container_summary_population:
+            st.write('Percentage of the population receiving treatment: ',
+                    f'{treated_pop_perc:5.2f}%')
 
 
         # ----- Timeline of patient pathway -----
-        st.subheader('Patient pathway')
-        st.write(
-            'Each step uses times in minutes. ' +
-            'To remove a step, set the value to zero.'
-            )
+        st.markdown('## Times to treatment')
+        # Put the summary times in here later:
+        container_summary_times = st.container()
+
+        # Take the inputs:
+        with st.expander('Patient pathway'):
+            st.write(
+                'Each step uses times in minutes. ' +
+                'To remove a step, set the value to zero.'
+                )
+            
+            cols_timeline = st.columns([1, 1])
+            # with cols_timeline[0]:
+            (case1_time_dict, case2_time_dict, case1_time_to_ivt,
+            case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = inputs_pathway(cols_timeline)
+
+            # Draw timelines
+            make_timeline_plot([case1_time_dict, case2_time_dict])
         
-        cols_timeline = st.columns([1, 1])
-        # with cols_timeline[0]:
-        (case1_time_dict, case2_time_dict, case1_time_to_ivt,
-        case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = inputs_pathway(cols_timeline)
+        # Now display the summary times in the box we placed earlier:
+        with container_summary_times:
+            # Write the final times to IVT and MT here.
+            cols_for_times = st.columns(2)
+            with cols_for_times[0]:
+                st.markdown('__Case 1:__')
+                st.markdown(
+                    emoji_text_dict['ivt_arrival_to_treatment'] +
+                    f' IVT: {case1_time_to_ivt//60}hr {case1_time_to_ivt%60}min'
+                )
+                st.markdown(
+                    emoji_text_dict['mt_arrival_to_treatment'] +
+                    f' IVT: {case1_time_to_mt//60}hr {case1_time_to_mt%60}min'
+                )
+        
+            with cols_for_times[1]:
+                st.markdown('__Case 2:__')
+                st.markdown(
+                    emoji_text_dict['ivt_arrival_to_treatment'] +
+                    f' IVT: {case2_time_to_ivt//60}hr {case2_time_to_ivt%60}min'
+                )
+                st.markdown(
+                    emoji_text_dict['mt_arrival_to_treatment'] +
+                    f' IVT: {case2_time_to_mt//60}hr {case2_time_to_mt%60}min'
+                )
 
-        # with cols_timeline[2]:
-        # Draw timelines
-        # fig, ax = plt.subplots(figsize=(12, 8))
-        make_timeline_plot([case1_time_dict, case2_time_dict])#, emoji_dict)
-        # make_timeline_plot(ax, [case1_time_dict, case2_time_dict], emoji_dict)
-        # st.pyplot(fig)
 
 
+
+    # ##################################
+    # ########## CALCULATIONS ##########
+    # ##################################
     # ----- Calculate all the stuff -----
     # Case 1:
     nlvo_ivt_case1_dict, lvo_ivt_case1_dict, lvo_mt_case1_dict = \

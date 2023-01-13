@@ -214,91 +214,92 @@ def inputs_patient_population():
 
         st.form_submit_button(label='Submit')
 
-    # ----- Advanced options for patient proportions -----
-    prop_expander = st.expander('Advanced options')
-    with prop_expander:
-        st.write('Percentage of each stroke type given each treatment: ')
-        with st.form(key='form_props_treatment'):
-            # for i,col in enumerate(form_cols):
-            #     col.write('-'*20)
-            # form_cols = st.columns(3)
-            # form_cols = st.columns(5)
-            prop_nlvo_treated_ivt_only = st.number_input(
-                label=(emoji_text_dict['ivt_arrival_to_treatment'] +
-                       ' nLVO given IVT'),
-                min_value=0.0,
-                max_value=100.0,
-                value=15.5,
-                step=0.1,
-                format='%3.1f'
-                )
-            prop_lvo_treated_ivt_only = st.number_input(
-                label=(emoji_text_dict['ivt_arrival_to_treatment'] +
-                       ' LVO given IVT only'),
-                min_value=0.0,
-                max_value=100.0,
-                value=0.0,
-                step=0.1,
-                format='%3.1f'
-                )
-            prop_lvo_treated_ivt_mt = st.number_input(
-                label=(emoji_text_dict['mt_arrival_to_treatment'] +
-                       ' LVO given MT'),
-                min_value=0.0,
-                max_value=100.0,
-                value=28.6,
-                step=0.1,
-                format='%3.1f'
-                )
-            prop_ich_treated = st.number_input(
-                label='ICH treated',
-                min_value=0.0,
-                max_value=100.0,
-                value=0.0,
-                step=0.1,
-                format='%3.1f'
-                )
-
-            prop_lvo_mt_also_receiving_ivt = st.number_input(
-                label=(
-                    emoji_text_dict['ivt_arrival_to_treatment'] +
-                    emoji_text_dict['mt_arrival_to_treatment'] +
-                    ' LVO MT patients who also receive IVT'),
-                min_value=0.0,
-                max_value=100.0,
-                value=85.0,
-                step=0.1,
-                format='%3.1f'
-                )
-
-            # Convert from percentage to fraction:
-            prop_nlvo_treated_ivt_only *= 0.01
-            prop_lvo_treated_ivt_only *= 0.01
-            prop_lvo_treated_ivt_mt *= 0.01
-            prop_ich_treated *= 0.01
-            prop_lvo_mt_also_receiving_ivt *= 0.01
-
-            st.form_submit_button(label='Submit')
-
-        treated_population = (
-            prop_nlvo * prop_nlvo_treated_ivt_only +
-            prop_lvo * prop_lvo_treated_ivt_mt +
-            prop_lvo * prop_lvo_treated_ivt_only
-            )
-    st.write('Percentage of the population receiving treatment: ',
-                f'{100.0*treated_population:5.2f}%')
-
     prop_dict = dict(
         nlvo=prop_nlvo,
         lvo=prop_lvo,
-        ich=prop_ich,
-        nlvo_treated_ivt_only=prop_nlvo_treated_ivt_only,
-        lvo_treated_ivt_only=prop_lvo_treated_ivt_only,
-        lvo_treated_ivt_mt=prop_lvo_treated_ivt_mt,
-        ich_treated=prop_ich_treated,
-        lvo_mt_also_receiving_ivt=prop_lvo_mt_also_receiving_ivt,
-        treated_population=treated_population
+        ich=prop_ich
     )
+    return prop_dict
+
+
+def inputs_patient_population_advanced(prop_dict):
+    # ----- Advanced options for patient proportions -----
+    st.write('Percentage of each stroke type given each treatment: ')
+    with st.form(key='form_props_treatment'):
+        # for i,col in enumerate(form_cols):
+        #     col.write('-'*20)
+        # form_cols = st.columns(3)
+        # form_cols = st.columns(5)
+        prop_nlvo_treated_ivt_only = st.number_input(
+            label=(emoji_text_dict['ivt_arrival_to_treatment'] +
+                    ' nLVO given IVT'),
+            min_value=0.0,
+            max_value=100.0,
+            value=15.5,
+            step=0.1,
+            format='%3.1f'
+            )
+        prop_lvo_treated_ivt_only = st.number_input(
+            label=(emoji_text_dict['ivt_arrival_to_treatment'] +
+                    ' LVO given IVT only'),
+            min_value=0.0,
+            max_value=100.0,
+            value=0.0,
+            step=0.1,
+            format='%3.1f'
+            )
+        prop_lvo_treated_ivt_mt = st.number_input(
+            label=(emoji_text_dict['mt_arrival_to_treatment'] +
+                    ' LVO given MT'),
+            min_value=0.0,
+            max_value=100.0,
+            value=28.6,
+            step=0.1,
+            format='%3.1f'
+            )
+        prop_ich_treated = st.number_input(
+            label='ICH treated',
+            min_value=0.0,
+            max_value=100.0,
+            value=0.0,
+            step=0.1,
+            format='%3.1f'
+            )
+
+        prop_lvo_mt_also_receiving_ivt = st.number_input(
+            label=(
+                emoji_text_dict['ivt_arrival_to_treatment'] +
+                emoji_text_dict['mt_arrival_to_treatment'] +
+                ' LVO MT patients who also receive IVT'),
+            min_value=0.0,
+            max_value=100.0,
+            value=85.0,
+            step=0.1,
+            format='%3.1f'
+            )
+
+        # Convert from percentage to fraction:
+        prop_nlvo_treated_ivt_only *= 0.01
+        prop_lvo_treated_ivt_only *= 0.01
+        prop_lvo_treated_ivt_mt *= 0.01
+        prop_ich_treated *= 0.01
+        prop_lvo_mt_also_receiving_ivt *= 0.01
+
+        st.form_submit_button(label='Submit')
+
+    treated_population = (
+        prop_dict['nlvo'] * prop_nlvo_treated_ivt_only +
+        prop_dict['lvo'] * prop_lvo_treated_ivt_mt +
+        prop_dict['lvo'] * prop_lvo_treated_ivt_only
+        )
+
+    # Update the dictionary of patient proportion information:
+    prop_dict['nlvo_treated_ivt_only'] = prop_nlvo_treated_ivt_only
+    prop_dict['lvo_treated_ivt_only'] = prop_lvo_treated_ivt_only
+    prop_dict['lvo_treated_ivt_mt'] = prop_lvo_treated_ivt_mt
+    prop_dict['ich_treated'] = prop_ich_treated
+    prop_dict['lvo_mt_also_receiving_ivt'] = prop_lvo_mt_also_receiving_ivt
+    prop_dict['treated_population'] = treated_population
 
     return prop_dict
 
