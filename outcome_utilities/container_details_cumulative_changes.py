@@ -185,9 +185,10 @@ def do_prob_bars(
         itemdoubleclick=False
         ))
 
-    # Set x-axis limits:
+    # Set axis limits:
     # (give breathing room for the bar borders to be drawn)
     fig.update_xaxes(range=[0 - 1e-2, 1 + 1e-2])
+    fig.update_yaxes(range=[-0.4, 2.4])
 
     # Remove grid lines and x=0, y=0 lines:
     fig.update_xaxes(zeroline=False, showgrid=False)
