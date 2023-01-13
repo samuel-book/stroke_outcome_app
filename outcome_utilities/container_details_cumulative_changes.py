@@ -174,9 +174,10 @@ def do_prob_bars(
     # Format legend:
     fig.update_layout(legend=dict(
         orientation='h',
+        traceorder='reversed',  # Show mRS=0 on left
         # Location:
         x=1.0,
-        y=1.0,
+        y=1.2,
         yanchor='bottom',
         xanchor='right',
         # Remove interactive legend (clicking to highlight or hide):
@@ -186,14 +187,14 @@ def do_prob_bars(
 
     # Set x-axis limits:
     # (give breathing room for the bar borders to be drawn)
-    fig.update_xaxes(range=[0 - 1e-4, 1 + 1e-4])
+    fig.update_xaxes(range=[0 - 1e-2, 1 + 1e-2])
 
     # Remove grid lines and x=0, y=0 lines:
     fig.update_xaxes(zeroline=False, showgrid=False)
     fig.update_yaxes(zeroline=False, showgrid=False)
 
     # Make plot less tall:
-    fig.update_layout(margin=dict(t=30, b=0), height=150)
+    fig.update_layout(margin=dict(t=50, b=0), height=150)
 
     # Write to streamlit:
     st.plotly_chart(fig, use_container_width=True)

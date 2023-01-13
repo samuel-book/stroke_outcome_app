@@ -294,7 +294,7 @@ def do_probs_with_time(
             x=treatment_time, # / 60.0,
             y=1.0,
             text=treatment_labels[i],
-            showarrow=True,
+            showarrow=False,
             # yshift=-100,
             ax=0,  # Make arrow vertical - a = arrow, x = x-shift.
             ay=-20,  # Make the label sit above the top of the graph
