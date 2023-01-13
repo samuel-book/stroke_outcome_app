@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 
 from .fixed_params import colour_list, utility_weights
@@ -112,7 +113,7 @@ def do_prob_bars(
         ):
 
     dists = ['dist_no_treatment', 'dist_time_input_treatment', 'dist_pre_stroke']
-    cum_dists = ['dist_cumsum_time_input_treatment', 'dist_cumsum_no_treatment', 'dist_cumsum_pre_stroke']
+    cum_dists = ['dist_cumsum_no_treatment', 'dist_cumsum_time_input_treatment', 'dist_cumsum_pre_stroke']
 
     y_labels = [
         'No treatment',
@@ -124,52 +125,75 @@ def do_prob_bars(
     # otherwise the axis jumps about as the label changes size
     # between "9 minutes" and "10 minutes" (extra character).
 
-    # Build a dataframe from the input probs and times:
-    # Build this data into a big dataframe for plotly.
-    # It wants each row in the table to have [mRS, year, hazard].
+    fig = go.Figure()
+    y_vals = [0, 1, 2]
 
-    # The symbol for less than / equal to: ≤
-    mRS_list = range(7) # [  # 'mRS='+f'{i}'
-        # f'{i}' ] * 7
-    for d in range(3):
-        # Use dtype=object to keep the mixed strings (mRS),
-        # integers (years) and floats (hazards).
-        data_here = np.transpose(
-            np.array([
-                mRS_list,
-                [y_labels[d]] * len(mRS_list),
-                dist_dict[dists[d]],
-                dist_dict[cum_dists[d]],
-                ], dtype=object)
+    for i, dist in enumerate(dists):
+        show_legend = False if i > 0 else True
+        for mRS in np.arange(7):
+            custom_data = np.stack((
+                [mRS],
+                [dist_dict[cum_dists[i]][mRS]],
+                # [y_labels[i]],
+            ), axis=-1)
+            fig.add_trace(go.Bar(
+                x=[dist_dict[dists[i]][mRS]],
+                y=[y_vals[i]],
+                marker=dict(color=colour_list[mRS]),
+                orientation='h',
+                name=str(mRS),
+                showlegend=show_legend,
+                customdata=custom_data,
+                width=0.7  # Skinniness of bars
+            ))
+
+    # Change the bar mode
+    fig.update_layout(barmode='stack')
+
+
+    fig.update_traces(
+        hovertemplate=(
+            'mRS≤%{customdata[0]}: %{customdata[1]:.2f}' +
+            '<br>' +
+            'mRS=%{customdata[0]}: %{x:.2f}'
+            # Remove content from secondary box:
+            '<extra></extra>'
             )
+    )
 
-        if d == 0:
-            # Start a new big array that will store all the data:
-            data_to_plot = data_here
-        else:
-            # Add this data to the existing big array:
-            data_to_plot = np.vstack((data_to_plot, data_here))
+    # Set axis labels:
+    fig.update_xaxes(title_text='Cumulative probability')
+    # fig.update_yaxes(title_text='Cumulative probability')
+    fig.update_layout(legend_title='mRS')  #, title_x=0.5)
+    fig.update_layout(yaxis=dict(
+        tickmode='array',
+        tickvals=y_vals,
+        ticktext=y_labels
+    ))
 
-
-    # Pop this data into a dataframe:
-    df_to_plot = pd.DataFrame(
-        data_to_plot,
-        columns=[
-            'mRS',
-            'Treatment time',
-            'Probability',
-            'Cumulative probability'
-            ]
-        )
-
-    fig = px.bar(
-        df_to_plot,
-        x='Probability',
-        y='Treatment time',
-        color='mRS',
+    # Format legend:
+    fig.update_layout(legend=dict(
         orientation='h',
-        color_discrete_sequence=colour_list
-        )
+        # Location:
+        x=1.0,
+        y=1.0,
+        yanchor='bottom',
+        xanchor='right',
+        # Remove interactive legend (clicking to highlight or hide):
+        itemclick=False,
+        itemdoubleclick=False
+        ))
+
+    # Set x-axis limits:
+    # (give breathing room for the bar borders to be drawn)
+    fig.update_xaxes(range=[0 - 1e-4, 1 + 1e-4])
+
+    # Remove grid lines and x=0, y=0 lines:
+    fig.update_xaxes(zeroline=False, showgrid=False)
+    fig.update_yaxes(zeroline=False, showgrid=False)
+
+    # Make plot less tall:
+    fig.update_layout(margin=dict(t=30, b=0), height=150)
 
     # Write to streamlit:
     st.plotly_chart(fig, use_container_width=True)

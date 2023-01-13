@@ -216,7 +216,7 @@ def do_probs_with_time(
         hovertemplate=(
             # 'mRS=%{customdata[1]}: %{y:>6.2f}' +
             # 5 * '\U00002002' +
-            'mRS≤%{customdata[1]}: %{customdata[0]:4.2f}' +
+            'mRS≤%{customdata[1]}: %{customdata[0]:6.4f}' +
             '<extra>' +
             # '%{customdata[2]} %{customdata[3]}' +
             '</extra>'
