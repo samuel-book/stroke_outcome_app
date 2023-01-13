@@ -47,45 +47,88 @@ def write_text_from_file(filename, head_lines_to_skip=0):
     st.markdown(f"""{text_to_print}""")
 
 
-def inputs_pathway():
+def inputs_pathway(pathway_cols):
     # All fixed times have units of minutes
     # pathway_cols = st.columns(3)
-    # with pathway_cols[0]:
+
     # Column 1
-    onset_to_ambulance_arrival = st.number_input(
-        label=(emoji_text_dict['onset_to_ambulance_arrival']
-            + ' Onset to ambulance arrival'),
-        min_value=0, max_value=600, value=60, step=5)
-    transfer_additional_delay = st.number_input(
-        label=(emoji_text_dict['onset_to_ambulance_arrival']
-            + ' Delay for transfer between centres'),
-        min_value=0, max_value=600, value=60, step=5)
+    with pathway_cols[0]:
+        st.markdown('__Both cases:__')
+        # Case 1 + 2
+        onset_to_ambulance_arrival = st.number_input(
+            label=(emoji_text_dict['onset_to_ambulance_arrival'] +
+                   ' Onset to ambulance arrival'),
+            min_value=0,
+            max_value=600,
+            value=60,
+            step=5
+            )
+        # Case 1 + 2
+        ivt_arrival_to_treatment = st.number_input(
+            label=(
+                emoji_text_dict['ivt_arrival_to_treatment'] +
+                ' Delay between arrival at either centre and IVT treatment'
+                ),
+            min_value=0,
+            max_value=240,
+            value=30,
+            step=5
+            )
+        # Case 1 + 2
+        mt_arrival_to_treatment = st.number_input(
+            label=(
+                emoji_text_dict['mt_arrival_to_treatment'] +
+                ' Delay between arrival at IVT+MT centre and MT treatment'
+                ),
+            min_value=0,
+            max_value=240,
+            value=90,
+            step=5
+            )
+
 
     # Column 2
-    # with pathway_cols[1]:
-    travel_to_ivt = st.number_input(
-        label=(emoji_text_dict['travel_to_ivt']
-            + ' Travel time from onset location to IVT centre'),
-        min_value=0, max_value=600, value=30, step=5)
-    travel_to_mt = st.number_input(
-        label=(emoji_text_dict['travel_to_mt']
-            + ' Travel time from onset location to IVT+MT centre'),
-        min_value=0, max_value=600, value=50, step=5)
-    travel_ivt_to_mt = st.number_input(
-        label=(emoji_text_dict['travel_ivt_to_mt']
-            + ' Travel time between IVT and IVT+MT centres'),
-        min_value=0, max_value=600, value=50, step=5)
+    with pathway_cols[1]:
+        st.write('__Case 1 only:__')
+        # Case 1 only
+        travel_to_ivt = st.number_input(
+            label=(emoji_text_dict['travel_to_ivt'] +
+                   ' Travel time from onset location to IVT centre'),
+            min_value=0,
+            max_value=120,
+            value=30,
+            step=5
+            )
+        # Case 1 only
+        transfer_additional_delay = st.number_input(
+            label=(emoji_text_dict['onset_to_ambulance_arrival'] +
+                   ' Delay for transfer between centres'),
+            min_value=0,
+            max_value=180,
+            value=60,
+            step=5
+            )
+        # Case 1 only
+        travel_ivt_to_mt = st.number_input(
+            label=(emoji_text_dict['travel_ivt_to_mt'] +
+                   ' Travel time between IVT and IVT+MT centres'),
+            min_value=0,
+            max_value=180,
+            value=50,
+            step=5
+            )
+        st.write('__Case 2 only:__')
+        # Case 2 only
+        travel_to_mt = st.number_input(
+            label=(emoji_text_dict['travel_to_mt'] +
+                   ' Travel time from onset location to IVT+MT centre'),
+            min_value=0,
+            max_value=120,
+            value=50,
+            step=5
+            )
 
-    # Column 3
-    # with pathway_cols[2]:
-    ivt_arrival_to_treatment = st.number_input(
-        label=(emoji_text_dict['ivt_arrival_to_treatment'] +
-            ' Delay between arrival at either centre and IVT treatment'),
-        min_value=0, max_value=600, value=30, step=5)
-    mt_arrival_to_treatment = st.number_input(
-        label=(emoji_text_dict['mt_arrival_to_treatment'] +
-            ' Delay between arrival at IVT+MT centre and MT treatment'),
-        min_value=0, max_value=600, value=90, step=5)
+
     # ----- end of inputs -----
 
     case1_time_dict = dict(

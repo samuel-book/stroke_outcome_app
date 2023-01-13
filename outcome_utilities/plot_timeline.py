@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 import plotly.graph_objects as go
+import plotly.express as px
 
+from outcome_utilities.fixed_params import emoji_text_dict
 
 # Add an extra bit to the path if we need to.
 # Try importing something as though we're running this from the same
@@ -18,22 +20,28 @@ except FileNotFoundError:
     dir = 'stroke_outcome_app/'
 
 
-def make_timeline_plot(time_dicts, emoji_dict={}):
+def make_timeline_plot(time_dicts):
     label_dict = dict(
         onset='Onset',
-        onset_to_ambulance_arrival='Travel to<br>hospital<br>begins',
-        travel_to_ivt='Arrive at<br>IVT<br>centre',
-        travel_to_mt='Arrive at<br>IVT+MT<br>centre',
+        onset_to_ambulance_arrival='Travel to<br>hospital begins',
+        travel_to_ivt='Arrive at<br>IVT centre',
+        travel_to_mt='Arrive at<br>IVT+MT centre',
         ivt_arrival_to_treatment='IVT',
-        transfer_additional_delay='Transfer<br>begins',
-        travel_ivt_to_mt='Arrive at<br>IVT+MT<br>centre',
+        transfer_additional_delay='Transfer begins',
+        travel_ivt_to_mt='Arrive at<br>IVT+MT centre',
         mt_arrival_to_treatment='MT',
         )
 
     fig = go.Figure()
     x_vals = [0, 1]
-    label_offset = 0.3
+    label_offset = 0.4
     under_offset = -0.3
+    emoji_offset = 0.1
+
+
+    plotly_colours = px.colors.qualitative.Plotly
+
+    y_max = 0.0
 
     for i, time_dict in enumerate(time_dicts):
         # plot_timeline_matplotlib(time_dict, ax, y=y_vals[i], emoji_dict=emoji_dict)
@@ -45,10 +53,15 @@ def make_timeline_plot(time_dicts, emoji_dict={}):
         time_colour_list = []
         write_under_list = []
         labels = []
+        emoji_to_draw = []
         
         for time_key in time_dict.keys():
             # Store how to label this on the plot:
             labels.append(label_dict[time_key])
+            try:
+                emoji_to_draw.append(emoji_text_dict[time_key])
+            except KeyError:
+                emoji_to_draw.append('')
             # Find the cumulative time to this point:
             t_min = time_dict[time_key]
             time_cumulative += t_min/60.0
@@ -63,28 +76,32 @@ def make_timeline_plot(time_dicts, emoji_dict={}):
             # Decide colour formatting and extra labels for special
             # cases:
             if 'ivt_arrival_to_treatment' in time_key:
-                colour = 'blue'
+                colour = plotly_colours[0]
                 write_under = True
             elif 'mt_arrival_to_treatment' in time_key:
-                colour = 'red'
+                colour = plotly_colours[1]
                 write_under = True
             else:
-                colour = 'black'
+                # Default colour
+                colour = None #'black'
                 write_under = False
             time_colour_list.append(colour)
             write_under_list.append(write_under)
 
         # --- Plot ---
+        # Make new labels list with line breaks removed:
+        labels_plain = [l.replace('<br>', ' ') for l in labels]
         # Add straight line along the time axis:
         fig.add_trace(go.Scatter(
             y=time_cum_list,
             x=[x] * len(time_cum_list),
             mode='lines+markers',
-            marker=dict(size=20, symbol='line-ew-open'),
-            line=dict(color='black'),
+            marker=dict(size=12, symbol='line-ew-open'),
+            line=dict(color='grey'), #, width=lws[m]),
             showlegend=False,
-            customdata=np.stack((time_cum_str_list, labels), axis=-1)
+            customdata=np.stack((time_cum_str_list, labels_plain), axis=-1)
         ))
+        # 
         # Update the hover text for the lines:
         fig.update_traces(
             hovertemplate=(
@@ -97,36 +114,60 @@ def make_timeline_plot(time_dicts, emoji_dict={}):
 
         # Add label for each scatter marker
         for t, time_cum in enumerate(time_cum_list):
-            fig.add_annotation(
-                y=time_cum,
-                x=x + label_offset,
-                text=labels[t],
-                showarrow=False,
-                # yshift=1,
-                ax=0,  # Make arrow vertical - a = arrow, x = x-shift.
-                font=dict(color=time_colour_list[t])
-                )
-            if write_under_list[t] is True:
+            # Only show it if it's moved on from the previous:
+            if t == 0 or time_cum_list[t] > time_cum_list[t-1]:
+                if write_under_list[t] is True:
+                    text = labels[t] + '<br>'+time_cum_str_list[t]
+                else:
+                    text = labels[t]
                 fig.add_annotation(
                     y=time_cum,
-                    x= x + under_offset,
-                    text=time_cum_str_list[t],
+                    x=x + label_offset,
+                    text=text,
                     showarrow=False,
-                    yshift=1,
+                    # yshift=1,
+                    ax=0,  # Make arrow vertical - a = arrow, x = x-shift.
+                    font=dict(color=time_colour_list[t]),
+                    )
+                # Add emoji for each scatter marker
+                fig.add_annotation(
+                    y=time_cum,
+                    x=x + emoji_offset,
+                    text=emoji_to_draw[t],
+                    showarrow=False,
+                    # yshift=1,
                     ax=0,  # Make arrow vertical - a = arrow, x = x-shift.
                     font=dict(color=time_colour_list[t])
                     )
+                # if write_under_list[t] is True:
+                #     fig.add_annotation(
+                #         y=time_cum,
+                #         x= x + under_offset,
+                #         text=time_cum_str_list[t],
+                #         showarrow=False,
+                #         yshift=1,
+                #         ax=0,  # Make arrow vertical - a = arrow, x = x-shift.
+                #         font=dict(color=time_colour_list[t]),
+                #         textangle=-45
+                #         )
 
+            if time_cumulative > y_max:
+                y_max = time_cumulative
+
+
+    # Set y range:
+    fig.update_yaxes(range=[y_max * 1.05, 0 - y_max * 0.025]) #y_max])
+    # (don't need the following when manual axis limits are set:)
     # Flip y-axis so values are displayed as positive but 0 is on top.
-    fig['layout']['yaxis']['autorange'] = 'reversed'
+    # fig.update_layout(yaxis=dict(autorange='reversed'))
 
     # Set x-axis labels
     fig.update_layout(
         xaxis=dict(
             tickmode='array',
             tickvals=x_vals,
-            ticktext=['Case 1', 'Case 2'],
-            # tickfont=dict(color='darkgray'),
+            ticktext=['<b>Case 1', '<b>Case 2'],
+            # tickfont=dict(weight='heavy'),#)color='darkgray'),
             side='top'  # Moves the labels to the top of the grid
         ),
     )
@@ -138,8 +179,12 @@ def make_timeline_plot(time_dicts, emoji_dict={}):
     #                            xlim=xlim, ylim=ylim)
 
 
+    # Remove y=0 and x=0 lines (zeroline) and grid lines:
+    fig.update_yaxes(zeroline=False, showgrid=False)
+    fig.update_xaxes(zeroline=False, showgrid=False)
+
     # Reduce size of figure by adjusting margins:
-    fig.update_layout(margin=dict(l=0, r=0, b=0, t=0), height=800)
+    fig.update_layout(margin=dict(l=0, r=0, b=0, t=0), height=500)
 
     # Write to streamlit:
     st.plotly_chart(fig, use_container_width=True)
