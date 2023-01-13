@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 from .fixed_params import colour_list, time_no_effect_mt
 from .plot_probs_with_time import plot_probs_filled
@@ -73,6 +74,29 @@ def do_probs_with_time(
     # --- Plot probability with time -----
     times_to_plot = np.arange(0, time_no_effect + 1e-7, 5)
     times_hours = times_to_plot / 60.0
+    times_hours_str = [
+        f'{int(60*t//60):2d}hr ' +
+        f'{int(60*t%60):2d}min'
+        for t in times_hours]
+
+    treatment_times_str = [
+        f'{int(t//60):2d}hr ' +
+        f'{int(t%60):2d}min'
+        for t in treatment_times]
+
+    # times_str_hrs = [
+    #     f'{int(60*t//60):2d}hr '
+    #     for t in times_hours]
+    # times_str_mins = [
+    #     f'{int(60*t%60):2d}min'
+    #     for t in times_hours]
+
+    
+    # times_hours_d3_str = [
+    #     f'{int(60*t//60):2d}:' +  # hours
+    #     f'{int(60*t%60):2d}:' +  # minutes
+    #     f'{360*t%60}'  # seconds
+    #     for t in times_hours]
 
     # P(mRS<=5)=1.0 at all times, so it has no defined A, a, and b.
     # Instead append to this array a 0.0, which won't be used directly
@@ -127,26 +151,64 @@ def do_probs_with_time(
         columns=['mRS', 'Time (hours)', 'Probability', 'Cumulative probability']
         )
 
-    # Plot the data:
-    fig = px.area(
-        df_to_plot,
-        x='Time (hours)', y='Probability', color='mRS',
-        custom_data=['Cumulative probability', 'mRS'],
-        color_discrete_sequence=colour_list
-        )
-    # The custom_data aren't directly plotted in the previous lines,
-    # but are loaded ready for use with the hover template later.
+    # # Plot the data:
+    # fig = px.area(
+    #     df_to_plot,
+    #     x='Time (hours)', y='Probability', color='mRS',
+    #     custom_data=['Cumulative probability', 'mRS'],
+    #     color_discrete_sequence=colour_list
+    #     )
+    # # The custom_data aren't directly plotted in the previous lines,
+    # # but are loaded ready for use with the hover template later.
+
+    fig = go.Figure()
+    for i in range(7):
+        customdata = np.stack((
+            cum_probs_with_time_lists[i],
+            [i]*len(times_hours),
+            # times_str_hrs,
+            # times_str_mins
+            ), axis=-1)
+        # Line and fill:
+        fig.add_trace(go.Scatter(
+            x=times_hours_str, #times_hours_d3_str,
+            y=probs_with_time_lists[i],
+            mode='lines',
+            line=dict(color=colour_list[i]),
+            stackgroup='one',
+            name=f'{i}',
+            customdata=customdata,
+        ))
+        
+    # # Update x ticks:
+    # fig.update_layout(
+    #     xaxis=dict(
+    #         tickmode='array',
+    #         tickvals=times_hours,#[::10],
+    #         ticktext=times_hours_d3_str,#[::10],
+    #         nticks=10
+    #     )
+    # )
+    # fig.update_xaxes(
+    #     minor=dict(
+    #         tickmode='array',
+    #         tickvals=times_hours,#[::10],
+    #         # ticktext=times_hours_d3_str,#[::10],
+    #     )
+    # )
+
+
 
     # Set axis labels:
-    fig.update_xaxes(title_text='Time since onset (hours)')
-    fig.update_yaxes(title_text='Cumulative probability (%)')
-    # fig.update_layout(legend_title='mRS', title_x=0.5)
+    fig.update_xaxes(title_text='Time since onset')
+    fig.update_yaxes(title_text='Cumulative probability')
+    fig.update_layout(legend_title='mRS')  #, title_x=0.5)
 
     # Hover settings:
     # When hovering, highlight all mRS bins' points for chosen x:
     fig.update_layout(hovermode='x unified')
     # Remove default bulky hover messages:
-    fig.update_traces(hovertemplate=None)
+    # fig.update_traces(hovertemplate=None)
     # I don't know why, but the line with <extra></extra> is required
     # to remove the default hover label before the rest of this.
     # Otherwise get "0 mRS=0 ..."
@@ -155,34 +217,81 @@ def do_probs_with_time(
             # 'mRS=%{customdata[1]}: %{y:>6.2f}' +
             # 5 * '\U00002002' +
             'mRS≤%{customdata[1]}: %{customdata[0]:4.2f}' +
-            '<extra></extra>'
+            '<extra>' +
+            # '%{customdata[2]} %{customdata[3]}' +
+            '</extra>'
             )
-        )
-    
+    )
+
+    # fig.update_layout(
+    #     xaxis_tickformat='%H%M',
+    #     xaxis_hoverformat='%H%M'  # '%{customdata[2]} %{customdata[3]}'
+    # )
+
+    # fig.update_xaxes(
+    #     tickformat='%H%M',
+    #     hoverformat='%H%M'  # '%{customdata[2]} %{customdata[3]}'
+    # )
+
+
     # # Figure title:
     # fig.update_layout(title_text='Hazard function for Death by mRS',
     #                   title_x=0.5)
     # Change axis:
-    fig.update_yaxes(range=[0, 1])
-    fig.update_xaxes(range=[0, time_no_effect_mt/60],
+
+    time_no_effect_mt_str = (
+        f'{int(time_no_effect_mt//60):2d}hr ' +
+        f'{int(time_no_effect_mt%60):2d}min'
+    )
+    
+    # Secret bonus point to help with the range:
+    all_times = np.arange(0, time_no_effect_mt + 1e-7, 5) / 60.0
+    all_times_hours_str = [
+        f'{int(60*t//60):2d}hr ' +
+        f'{int(60*t%60):2d}min'
+        for t in all_times]
+
+    fig.add_trace(go.Scatter(
+        x=all_times_hours_str,
+        y=[-1]*len(all_times_hours_str),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+    fig.update_xaxes(range=['0hr 0min', time_no_effect_mt_str], #time_no_effect_mt/60],
                      constrain='domain')  # For aspect ratio.
+
+    # Make the y-axis max a bit bigger than 1 to make sure the label
+    # at 1 is shown.
+    fig.update_yaxes(range=[0, 1 + 1e-2])
     # Update ticks:
-    # fig.update_xaxes(tick0=0, dtick=5)
+    # Reduce the number of x-axis ticks shown.
+    # dtick=12 means every 12th tick is shown, i.e. one per hour.
+    # st.write([f'{i}' for i in np.arange(np.ceil(time_no_effect_mt/60.0)+1)])
+    # fig.update_xaxes(tick0=0, dtick=12)#, ticktext=[f'{i}' for i in np.arange(np.ceil(time_no_effect_mt/60.0)+1)])
     # fig.update_yaxes(tick0=0, dtick=10)
 
+    # Update x ticks:
+    fig.update_layout(
+        xaxis=dict(
+            tickmode='array',
+            tickvals=all_times_hours_str[::12],
+            ticktext=[f'{int(i)}hr' for i in np.arange(np.ceil(time_no_effect_mt/60.0)+1)],#[::10],
+        )
+    )
 
     # Add vertical line at treatment times.
 
     # treatment_times,
     # treatment_labels=[],
-    for i, treatment_time in enumerate(treatment_times):
+
+    for i, treatment_time in enumerate(treatment_times_str):
         fig.add_vline(
-            x=treatment_time / 60.0,
+            x=treatment_time,# / 60.0,
             line=dict(color='black', width=2.0),
             # layer='below'  # Puts it below
             )
         fig.add_annotation(
-            x=treatment_time / 60.0,
+            x=treatment_time, # / 60.0,
             y=1.0,
             text=treatment_labels[i],
             showarrow=True,
@@ -201,6 +310,9 @@ def do_probs_with_time(
     #     x=1.03
     # ))
 
+    # Remove grid lines:
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
     # Set aspect ratio:
     fig.update_yaxes(
         scaleanchor='x',
@@ -208,7 +320,7 @@ def do_probs_with_time(
         constrain='domain'
     )
     # Reduce size of figure by adjusting margins:
-    fig.update_layout(margin=dict(b=0, t=0), height=250)
+    fig.update_layout(margin=dict(b=0, t=30), height=250)
 
     # Write to streamlit:
     st.plotly_chart(fig, use_container_width=True)
