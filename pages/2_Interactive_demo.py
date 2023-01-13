@@ -62,29 +62,32 @@ def main():
     # ###########################
     # ########## SETUP ##########
     # ###########################
-    st.header('Setup')
-    # ----- Population parameters -----
-    st.subheader('Patient population')
-    st.warning(
-        ':warning: Currently the ICH option ' +
-        'does not impact the change in mRS or utility.'
-        )
-    prop_dict = inputs_patient_population()
+
+    with st.sidebar:
+        st.header('Setup')
+
+        # ----- Population parameters -----
+        st.subheader('Patient population')
+        st.warning(
+            ':warning: Currently the ICH option ' +
+            'does not impact the change in mRS or utility.'
+            )
+        prop_dict = inputs_patient_population()
 
 
-    # ----- Timeline of patient pathway -----
-    st.subheader('Patient pathway')
-    st.write(
-        'Each step uses times in minutes. ' +
-        'To remove a step, set the value to zero.'
-        )
-    
-    cols_timeline = st.columns([1, 1, 2])
-    # with cols_timeline[0]:
-    (case1_time_dict, case2_time_dict, case1_time_to_ivt,
-    case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = inputs_pathway(cols_timeline)
+        # ----- Timeline of patient pathway -----
+        st.subheader('Patient pathway')
+        st.write(
+            'Each step uses times in minutes. ' +
+            'To remove a step, set the value to zero.'
+            )
+        
+        cols_timeline = st.columns([1, 1])
+        # with cols_timeline[0]:
+        (case1_time_dict, case2_time_dict, case1_time_to_ivt,
+        case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = inputs_pathway(cols_timeline)
 
-    with cols_timeline[2]:
+        # with cols_timeline[2]:
         # Draw timelines
         # fig, ax = plt.subplots(figsize=(12, 8))
         make_timeline_plot([case1_time_dict, case2_time_dict])#, emoji_dict)
