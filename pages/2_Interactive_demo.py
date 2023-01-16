@@ -10,7 +10,6 @@ metric (without rounding).
 
 # ----- Imports -----
 import streamlit as st
-import matplotlib.pyplot as plt
 
 # Add an extra bit to the path if we need to.
 # Try importing something as though we're running this from the same
@@ -21,20 +20,18 @@ except ModuleNotFoundError:
     # If the import fails, add the landing page directory to path.
     # Assume that the script is being run from the directory above
     # the landing page directory, which is called
-    # streamlit_lifetime_stroke.
+    # stroke_outcome_app.
     import sys
     sys.path.append('./stroke_outcome_app/')
 
 # Custom functions:
-from outcome_utilities.inputs import \
-    inputs_patient_population, inputs_pathway, write_text_from_file, \
-    inputs_patient_population_advanced
-from outcome_utilities.plot_timeline import \
-    make_timeline_plot
+import outcome_utilities.inputs
+from outcome_utilities.inputs import write_text_from_file
+from outcome_utilities.plot_timeline import make_timeline_plot
 from outcome_utilities.fixed_params import \
-    page_setup, colour_list, emoji_dict, utility_weights, emoji_text_dict
-from outcome_utilities.main_calculations import \
-    find_dist_dicts, find_outcome_dicts
+    page_setup, utility_weights, emoji_text_dict
+
+import outcome_utilities.main_calculations
 # Containers:
 import outcome_utilities.container_results_metrics
 import outcome_utilities.container_details_cumulative_changes
@@ -49,49 +46,58 @@ def main():
 
     page_setup()
 
+    # Write text at the top of the page:
     st.markdown('# Interactive demo')
-
     st.info(
         ':information_source: ' +
         'For acronym reference, see the introduction page.'
         )
-
     write_text_from_file('pages/text_for_pages/2_Intro_for_demo.txt',
-                        head_lines_to_skip=2)
-
+                         head_lines_to_skip=2)
 
     # ###########################
     # ########## SETUP ##########
     # ###########################
 
+    # All user inputs are now in the sidebar:
     with st.sidebar:
         st.markdown('# Setup')
+
         # ----- Population parameters -----
+        # Collect the user inputs into a dictionary of patient
+        # proportions, prop_dict.
         st.markdown('## Patient population')
-        # Put the summary info in here later:
+        # Place an empty container here now, and later
+        # put the summary info in it.
         container_summary_population = st.container()
 
+        # Proportion of nLVO / LVO / ICH:
         with st.expander('Stroke types'):
             st.warning(
                 ':warning: Currently the ICH option ' +
                 'does not impact the change in mRS or utility.'
                 )
-            prop_dict = inputs_patient_population()
-        
+            prop_dict = outcome_utilities.inputs.inputs_patient_population()
+
+        # Percentages of each group who receive treatment:
         with st.expander('Advanced options'):
-            prop_dict = inputs_patient_population_advanced(prop_dict)
-        
-        treated_pop_perc = 100.0*prop_dict['treated_population']
+            prop_dict = outcome_utilities.inputs.\
+                inputs_patient_population_advanced(prop_dict)
 
         # Now write info in the box from earlier.
+        treated_pop_perc = 100.0*prop_dict['treated_population']
         with container_summary_population:
-            st.write('Percentage of the population receiving treatment: ',
-                    f'{treated_pop_perc:5.2f}%')
-
+            st.markdown(
+                'Percentage of the population receiving treatment: ' +
+                f'{treated_pop_perc:5.2f}%'
+                )
 
         # ----- Timeline of patient pathway -----
+        # Collect the user inputs into two main dictionaries, one for
+        # case 1 and one for case 1, called case(1/2)_time_dict.
         st.markdown('## Times to treatment')
-        # Put the summary times in here later:
+        # Place an empty container here now, and later
+        # put the summary times in it.
         container_summary_times = st.container()
 
         # Take the inputs:
@@ -100,60 +106,73 @@ def main():
                 'Each step uses times in minutes. ' +
                 'To remove a step, set the value to zero.'
                 )
-            
+            # Split the input widgets into two columns:
             cols_timeline = st.columns([1, 1])
-            # with cols_timeline[0]:
+            # Return the dictionaties and some useful times:
             (case1_time_dict, case2_time_dict, case1_time_to_ivt,
-            case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = inputs_pathway(cols_timeline)
+             case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = \
+                outcome_utilities.inputs.inputs_pathway(cols_timeline)
 
             # Draw timelines
             make_timeline_plot([case1_time_dict, case2_time_dict])
-        
-        # Now display the summary times in the box we placed earlier:
+
+        # Now display the final times to IVT and MT
+        # in the box we placed earlier:
         with container_summary_times:
-            # Write the final times to IVT and MT here.
+            # Put Case 1 in first column, Case 2 in second.
             cols_for_times = st.columns(2)
             with cols_for_times[0]:
                 st.markdown('__Case 1:__')
                 st.markdown(
                     emoji_text_dict['ivt_arrival_to_treatment'] +
-                    f' IVT: {case1_time_to_ivt//60}hr {case1_time_to_ivt%60}min'
+                    f' IVT: {case1_time_to_ivt//60}hr ' +
+                    f'{case1_time_to_ivt%60}min'
                 )
                 st.markdown(
                     emoji_text_dict['mt_arrival_to_treatment'] +
-                    f' IVT: {case1_time_to_mt//60}hr {case1_time_to_mt%60}min'
+                    f' MT: {case1_time_to_mt//60}hr ' +
+                    f'{case1_time_to_mt%60}min'
                 )
-        
+
             with cols_for_times[1]:
                 st.markdown('__Case 2:__')
                 st.markdown(
                     emoji_text_dict['ivt_arrival_to_treatment'] +
-                    f' IVT: {case2_time_to_ivt//60}hr {case2_time_to_ivt%60}min'
+                    f' IVT: {case2_time_to_ivt//60}hr ' +
+                    f'{case2_time_to_ivt%60}min'
                 )
                 st.markdown(
                     emoji_text_dict['mt_arrival_to_treatment'] +
-                    f' IVT: {case2_time_to_mt//60}hr {case2_time_to_mt%60}min'
+                    f' MT: {case2_time_to_mt//60}hr ' +
+                    f'{case2_time_to_mt%60}min'
                 )
-
-
-
 
     # ##################################
     # ########## CALCULATIONS ##########
     # ##################################
-    # ----- Calculate all the stuff -----
-    # Case 1:
+    # ----- Case 1 -----
+    # Each of the returned dictionaries contains various useful mRS
+    # distributions, lists of constants for creating probability vs
+    # time, treatment time...
     nlvo_ivt_case1_dict, lvo_ivt_case1_dict, lvo_mt_case1_dict = \
+        outcome_utilities.main_calculations.\
         find_dist_dicts(case1_time_to_ivt, case1_time_to_mt)
 
+    # Make dictionary for each treatment type.
+    # Each dict contains the mean mRS or utility at various times,
+    # pre-stroke, no treatment, and time-input treatment,
+    # and the differences between time-input treatment and the others.
+    # The final "outcomes" dict gathers the expected mean mRS and
+    # utility, and changes from no treatment, for the input patient
+    # population.
     (mean_mRS_dict_nlvo_ivt_case1,
-    mean_util_dict_nlvo_ivt_case1,
-    mean_mRS_dict_lvo_ivt_case1,
-    mean_util_dict_lvo_ivt_case1,
-    mean_mRS_dict_lvo_mt_case1,
-    mean_util_dict_lvo_mt_case1,
-    mean_outcomes_dict_population_case1) = \
-        find_outcome_dicts(
+     mean_util_dict_nlvo_ivt_case1,
+     mean_mRS_dict_lvo_ivt_case1,
+     mean_util_dict_lvo_ivt_case1,
+     mean_mRS_dict_lvo_mt_case1,
+     mean_util_dict_lvo_mt_case1,
+     mean_outcomes_dict_population_case1) = \
+        outcome_utilities.main_calculations.find_outcome_dicts(
             nlvo_ivt_case1_dict,
             lvo_ivt_case1_dict,
             lvo_mt_case1_dict,
@@ -161,19 +180,21 @@ def main():
             prop_dict
             )
 
-
-    # Case 2:
+    # ----- Case 2 -----
+    # (same as for case 1)
     nlvo_ivt_case2_dict, lvo_ivt_case2_dict, lvo_mt_case2_dict = \
+        outcome_utilities.main_calculations.\
         find_dist_dicts(case2_time_to_ivt, case2_time_to_mt)
 
+    # (same as for case 1)
     (mean_mRS_dict_nlvo_ivt_case2,
-    mean_util_dict_nlvo_ivt_case2,
-    mean_mRS_dict_lvo_ivt_case2,
-    mean_util_dict_lvo_ivt_case2,
-    mean_mRS_dict_lvo_mt_case2,
-    mean_util_dict_lvo_mt_case2,
-    mean_outcomes_dict_population_case2) = \
-        find_outcome_dicts(
+     mean_util_dict_nlvo_ivt_case2,
+     mean_mRS_dict_lvo_ivt_case2,
+     mean_util_dict_lvo_ivt_case2,
+     mean_mRS_dict_lvo_mt_case2,
+     mean_util_dict_lvo_mt_case2,
+     mean_outcomes_dict_population_case2) = \
+        outcome_utilities.main_calculations.find_outcome_dicts(
             nlvo_ivt_case2_dict,
             lvo_ivt_case2_dict,
             lvo_mt_case2_dict,
@@ -181,13 +202,11 @@ def main():
             prop_dict
             )
 
-
     # ###########################
     # ######### RESULTS #########
     # ###########################
-    st.header('Results')
+    st.markdown('# Results')
     # ----- Show metric for +/- mRS and utility -----
-    # st.subheader('Changes in mRS and utility')
     outcome_utilities.container_results_metrics.main(
         # Case 1:
         mean_outcomes_dict_population_case1['mRS_treated'],
@@ -205,7 +224,6 @@ def main():
         case2_time_to_mt,
         )
 
-
     # ###########################
     # ######### DETAILS #########
     # ###########################
@@ -213,29 +231,37 @@ def main():
     st.header('Details of the calculation')
     st.write('The following bits detail the calculation.')
 
-
     # ----- Details 1: Probability vs time -----
-    header_expander_details_prob_vs_time = (
-        '1: mRS distributions at the treatment times')
+    with st.expander('1: mRS distributions at the treatment times'):
 
-    with st.expander(header_expander_details_prob_vs_time):
-        outcome_utilities.container_details_prob_vs_time.main(
-            nlvo_ivt_case1_dict,
-            nlvo_ivt_case2_dict,
-            lvo_ivt_case1_dict,
-            lvo_ivt_case2_dict,
-            lvo_mt_case1_dict,
-            lvo_mt_case2_dict
-            )
+        write_text_from_file('pages/text_for_pages/2_Probs_with_time.txt',
+                             head_lines_to_skip=3)
 
+        tab1, tab2, tab3, tab4 = st.tabs([
+            'nLVO treated with IVT',
+            'LVO treated with IVT only',
+            'LVO treated with MT',
+            'ICH'
+        ])
+
+        with tab1:
+            outcome_utilities.container_details_prob_vs_time.\
+                compare_probs_with_time(
+                    nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
+        with tab2:
+            outcome_utilities.container_details_prob_vs_time.\
+                compare_probs_with_time(
+                    lvo_ivt_case1_dict, lvo_ivt_case2_dict)
+        with tab3:
+            outcome_utilities.container_details_prob_vs_time.\
+                compare_probs_with_time(
+                    lvo_mt_case1_dict, lvo_mt_case2_dict)
+        with tab4:
+            st.write('Nothing to see here.')
 
     # ----- Details 2: Cumulative changes -----
-    header_expander_details_cumulative_changes = (
-        '2: Cumulative changes in mRS and utility')
-
-    with st.expander(header_expander_details_cumulative_changes):
+    with st.expander('2: Cumulative changes in mRS and utility'):
         outcome_utilities.container_details_cumulative_changes.main(
-            colour_list,
             nlvo_ivt_case1_dict,
             nlvo_ivt_case2_dict,
             lvo_ivt_case1_dict,
@@ -248,12 +274,8 @@ def main():
             case2_time_to_mt
             )
 
-
     # ----- Details 3: Sum up changes -----
-    header_expander_details_overall_changes = (
-        '3: Calculations for overall changes in utility and mRS')
-
-    with st.expander(header_expander_details_overall_changes):
+    with st.expander('3: Calculations for overall changes in utility and mRS'):
         outcome_utilities.container_details_overall_changes.main(
             prop_dict,
             #
@@ -277,6 +299,7 @@ def main():
             mean_util_dict_lvo_mt_case2,
             mean_outcomes_dict_population_case2['util_change'],
         )
+
 
 if __name__ == '__main__':
     main()

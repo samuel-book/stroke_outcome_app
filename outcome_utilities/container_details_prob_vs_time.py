@@ -6,41 +6,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from .fixed_params import colour_list, time_no_effect_mt
-from .plot_probs_with_time import plot_probs_filled
-from outcome_utilities.inputs import write_text_from_file
-
-
-def main(
-        nlvo_ivt_case1_dict,
-        nlvo_ivt_case2_dict,
-        lvo_ivt_case1_dict,
-        lvo_ivt_case2_dict,
-        lvo_mt_case1_dict,
-        lvo_mt_case2_dict
-        ):
-
-    tab1, tab2, tab3, tab4 = st.tabs([
-        'nLVO treated with IVT',
-        'LVO treated with IVT only',
-        'LVO treated with MT',
-        'ICH'
-    ])
-
-    with tab1:
-        compare_probs_with_time(nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
-    with tab2:
-        compare_probs_with_time(lvo_ivt_case1_dict, lvo_ivt_case2_dict)
-    with tab3:
-        compare_probs_with_time(lvo_mt_case1_dict, lvo_mt_case2_dict)
-    with tab4:
-        st.write('Nothing to see here.')
 
 
 def compare_probs_with_time(dict1, dict2):
     # Plot probs with time
-
-    write_text_from_file('pages/text_for_pages/2_Probs_with_time.txt',
-                         head_lines_to_skip=3)
 
     do_probs_with_time(
         dict1['time_no_effect'], dict1['A_list'], dict2['b_list'],
@@ -63,7 +32,7 @@ def compare_probs_with_time(dict1, dict2):
 
 
 def do_probs_with_time(
-        time_no_effect, 
+        time_no_effect,
         A_list,
         b_list,
         colour_list,
@@ -71,8 +40,16 @@ def do_probs_with_time(
         treatment_labels=[],
         time_no_effect_mt=8*60
         ):
+
     # --- Plot probability with time -----
     times_to_plot = np.arange(0, time_no_effect + 1e-7, 5)
+    # Add in the treatment times and final times:
+    times_to_plot = np.sort(np.unique(np.append(
+        [*treatment_times, time_no_effect], times_to_plot
+    )))
+
+    times_to_plot_m = pd.to_datetime( times_to_plot, unit='m')
+
     times_hours = times_to_plot / 60.0
     times_hours_str = [
         f'{int(60*t//60):2d}hr ' +
@@ -83,6 +60,8 @@ def do_probs_with_time(
         f'{int(t//60):2d}hr ' +
         f'{int(t%60):2d}min'
         for t in treatment_times]
+
+    x_vals = np.arange(len(times_to_plot))
 
     # times_str_hrs = [
     #     f'{int(60*t//60):2d}hr '
@@ -125,31 +104,31 @@ def do_probs_with_time(
         # diff_list[np.where(diff_list < 0)] = 0.0
         probs_with_time_lists.append(diff_list)
 
-    # Build this data into a big dataframe for plotly.
-    # It wants each row in the table to have [mRS, year, hazard].
-    for i in range(7):
-        # The symbol for less than / equal to: ≤
-        mRS_list = [  # 'mRS='+f'{i}'
-            f'{i}' for t in times_hours]
-        # Use dtype=object to keep the mixed strings (mRS),
-        # integers (years) and floats (hazards).
-        data_here = np.transpose(
-            np.array([mRS_list, times_hours, probs_with_time_lists[i], cum_probs_with_time_lists[i]],
-                     dtype=object)
-            )
+    # # Build this data into a big dataframe for plotly.
+    # # It wants each row in the table to have [mRS, year, hazard].
+    # for i in range(7):
+    #     # The symbol for less than / equal to: ≤
+    #     mRS_list = [  # 'mRS='+f'{i}'
+    #         f'{i}' for t in times_hours]
+    #     # Use dtype=object to keep the mixed strings (mRS),
+    #     # integers (years) and floats (hazards).
+    #     data_here = np.transpose(
+    #         np.array([mRS_list, times_hours, probs_with_time_lists[i], cum_probs_with_time_lists[i]],
+    #                  dtype=object)
+    #         )
 
-        if i == 0:
-            # Start a new big array that will store all the data:
-            data_to_plot = data_here
-        else:
-            # Add this data to the existing big array:
-            data_to_plot = np.vstack((data_to_plot, data_here))
+    #     if i == 0:
+    #         # Start a new big array that will store all the data:
+    #         data_to_plot = data_here
+    #     else:
+    #         # Add this data to the existing big array:
+    #         data_to_plot = np.vstack((data_to_plot, data_here))
 
-    # Pop this data into a dataframe:
-    df_to_plot = pd.DataFrame(
-        data_to_plot,
-        columns=['mRS', 'Time (hours)', 'Probability', 'Cumulative probability']
-        )
+    # # Pop this data into a dataframe:
+    # df_to_plot = pd.DataFrame(
+    #     data_to_plot,
+    #     columns=['mRS', 'Time (hours)', 'Probability', 'Cumulative probability']
+    #     )
 
     # # Plot the data:
     # fig = px.area(
@@ -171,7 +150,7 @@ def do_probs_with_time(
             ), axis=-1)
         # Line and fill:
         fig.add_trace(go.Scatter(
-            x=times_hours_str, #times_hours_d3_str,
+            x=times_to_plot_m, #x_vals,  #times_hours_str, #times_hours_d3_str,
             y=probs_with_time_lists[i],
             mode='lines',
             line=dict(color=colour_list[i]),
@@ -179,7 +158,17 @@ def do_probs_with_time(
             name=f'{i}',
             customdata=customdata,
         ))
-        
+
+
+    # # Update x ticks:
+    # fig.update_layout(
+    #     xaxis=dict(
+    #         tickmode='array',
+    #         tickvals=x_vals,
+    #         ticktext=times_hours_str
+    #     )
+    # )
+
     # # Update x ticks:
     # fig.update_layout(
     #     xaxis=dict(
@@ -244,21 +233,43 @@ def do_probs_with_time(
         f'{int(time_no_effect_mt%60):2d}min'
     )
     
-    # Secret bonus point to help with the range:
-    all_times = np.arange(0, time_no_effect_mt + 1e-7, 5) / 60.0
+    # Secret bonus line to help with the range:
+    # all_times = np.arange(0, time_no_effect_mt + 1e-7, 5) / 60.0
+    all_times = np.array([0.0, time_no_effect_mt]) / 60.0
+    all_times_m = pd.to_datetime(all_times, unit='m')
+
     all_times_hours_str = [
         f'{int(60*t//60):2d}hr ' +
         f'{int(60*t%60):2d}min'
         for t in all_times]
 
-    fig.add_trace(go.Scatter(
-        x=all_times_hours_str,
-        y=[-1]*len(all_times_hours_str),
-        showlegend=False,
-        hoverinfo='skip'
-    ))
-    fig.update_xaxes(range=['0hr 0min', time_no_effect_mt_str], #time_no_effect_mt/60],
+    # fig.add_trace(go.Scatter(
+    #     x=all_times_m, # np.arange(len(all_times_hours_str)),
+    #     y=[-1]*len(all_times),
+    #     showlegend=False,
+    #     hoverinfo='skip'
+    # ))
+
+
+    # # Update x ticks:
+    # all_x_vals = np.arange(len(all_times_hours_str))
+    # fig.update_layout(
+    #     xaxis=dict(
+    #         tickmode='array',
+    #         tickvals=all_x_vals,
+    #         ticktext=all_times_hours_str
+    #     )
+    # )
+
+    x_min = pd.to_datetime(0.0, unit='m')
+    x_max = pd.to_datetime(time_no_effect_mt, unit='m')
+
+    fig.update_xaxes(range=[x_min, x_max], #time_no_effect_mt/60],
                      constrain='domain')  # For aspect ratio.
+    # fig.update_xaxes(range=[0, time_no_effect_mt], #time_no_effect_mt/60],
+    #                  constrain='domain')  # For aspect ratio.
+    # fig.update_xaxes(range=['0hr 0min', time_no_effect_mt_str], #time_no_effect_mt/60],
+    #                  constrain='domain')  # For aspect ratio.
 
     # Make the y-axis max a bit bigger than 1 to make sure the label
     # at 1 is shown.
@@ -270,46 +281,44 @@ def do_probs_with_time(
     # fig.update_xaxes(tick0=0, dtick=12)#, ticktext=[f'{i}' for i in np.arange(np.ceil(time_no_effect_mt/60.0)+1)])
     # fig.update_yaxes(tick0=0, dtick=10)
 
-    # Update x ticks:
-    fig.update_layout(
-        xaxis=dict(
-            tickmode='array',
-            tickvals=all_times_hours_str[::12],
-            ticktext=[f'{int(i)}hr' for i in np.arange(np.ceil(time_no_effect_mt/60.0)+1)],#[::10],
-        )
-    )
+
+
+    # # Update x ticks:
+    # fig.update_layout(
+    #     xaxis=dict(
+    #         tickmode='array',
+    #         # tickvals=all_times_hours_str[::12],
+    #         tickvals=all_x_vals[::12],
+    #         ticktext=[f'{int(i)}hr' for i in np.arange(np.ceil(time_no_effect_mt/60.0)+1)],#[::10],
+    #     )
+    # )
 
     # Add vertical line at treatment times.
+    for i, treatment_time in enumerate(treatment_times):
+        
+        treatment_time_m = pd.to_datetime(treatment_time, unit='m')
 
-    # treatment_times,
-    # treatment_labels=[],
-
-    for i, treatment_time in enumerate(treatment_times_str):
         fig.add_vline(
-            x=treatment_time,# / 60.0,
-            line=dict(color='black', width=2.0),
-            # layer='below'  # Puts it below
+            x=treatment_time_m,
+            line=dict(color='black', width=2.0)
             )
         fig.add_annotation(
-            x=treatment_time, # / 60.0,
+            x=treatment_time_m,
             y=1.0,
             text=treatment_labels[i],
             showarrow=True,
             arrowhead=0,
             # yshift=-100,
-            ax=0,  # Make arrow vertical - a = arrow, x = x-shift.
+            ax=0,    # Make arrow vertical - a = arrow, x = x-shift.
             ay=-20,  # Make the label sit above the top of the graph
             textangle=-45
             )
 
-    # # Move legend to side
-    # fig.update_layout(legend=dict(
-    #     orientation='v', #'h',
-    #     yanchor='top',
-    #     y=1,
-    #     xanchor='left',
-    #     x=1.03
-    # ))
+
+    fig.update_xaxes(
+        # dtick="M1",
+        tickformat="%H %M"
+    )
 
     # Remove grid lines:
     fig.update_xaxes(showgrid=False)
@@ -325,23 +334,6 @@ def do_probs_with_time(
 
     # Write to streamlit:
     st.plotly_chart(fig, use_container_width=True)
-
-
-
-def do_probs_with_time_matplotlib(
-        time_no_effect, A_list, b_list, colour_list, treatment_times,
-        treatment_labels=[], time_no_effect_mt=8*60
-        ):
-    # --- Plot probability with time -----
-    times_to_plot = np.linspace(0, time_no_effect, 20)
-    # figsize is fudged to make it approx. same height as other plot
-    fig_probs_time, ax_probs_time = plt.subplots(figsize=(8, 4))
-    plot_probs_filled(
-        A_list, b_list, times_to_plot, colour_list,
-        # probs_to_mark=np.unique(probs_to_mark),
-        treatment_times, treatment_labels,
-        ax=ax_probs_time, xmax=time_no_effect_mt/60)
-    st.pyplot(fig_probs_time)
 
 
 def make_combo_mRS_bin_dataframe(df1, df2, treatment_time1, treatment_time2):

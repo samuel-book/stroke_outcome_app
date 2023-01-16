@@ -11,7 +11,6 @@ from .plot_dist import draw_horizontal_bar
 
 
 def main(
-        colour_list,
         nlvo_ivt_case1_dict,
         nlvo_ivt_case2_dict,
         lvo_ivt_case1_dict,

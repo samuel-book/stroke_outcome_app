@@ -1,6 +1,9 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import streamlit as st
+
+# Imports used for defining default colours:
+# import plotly.express as px
+# import matplotlib.pyplot as plt
 
 
 def page_setup():
@@ -27,37 +30,24 @@ def make_colour_list():
     return colour_list
 
 
-# st.latex(r'''\textcolor{#0072B2}{Hello}''')
-# st.latex(r'''\textcolor{#009E73}{Hello}''')
-# st.latex(r'''\textcolor{#D55E00}{Hello}''')
-# st.latex(r'''\textcolor{#CC79A7}{Hello}''')
-# st.latex(r'''\textcolor{#F0E442}{Hello}''')
-# st.latex(r'''\textcolor{#56B4E9}{Hello}''')
-# st.latex(r'''\textcolor{DarkSlateGray}{Hello}''')
+# Define built-in colours for mRS bands:
+# # Change default colour scheme:
+# plt.style.use('seaborn-colorblind')
+# colour_list = make_colour_list()
+# Colours as of 16th January 2023:
+# (the first six are from seaborn-colorblind)
+colour_list = [
+    "#0072B2", "#009E73", "#D55E00", "#CC79A7", "#F0E442", "#56B4E9",
+    "DarkSlateGray"  # mRS=6
+    ]
 
-
-def make_fig_legend(colour_list):
-    """Plot a legend for the mRS colours."""
-    fig_legend = plt.figure(figsize=(6, 2))
-    # Dummy data for legend:
-    dummies = []
-    for i in range(7):
-        dummy = plt.bar(np.NaN, np.NaN, color=colour_list[i], edgecolor='k')
-        dummies.append(dummy)
-
-    # Clear to remove automatic blank axis:
-    fig_legend.clear()
-    # Draw legend using dummy bars:
-    fig_legend.legend(
-        [*dummies], range(7),
-        loc='center', ncol=7, title='mRS colour scheme',
-        )
-    return fig_legend
-
-
-# Change default colour scheme:
-plt.style.use('seaborn-colorblind')
-colour_list = make_colour_list()
+# Define built-in colours for IVT and MT labels:
+# plotly_colours = px.colors.qualitative.Plotly
+# Colours as of 16th January 2023:
+plotly_colours = [
+    "#636EFA", "#EF553B", "#00CC96", "#AB63FA", "#FFA15A",
+    "#19D3F3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"
+    ]
 
 utility_weights = np.array(
     [0.97, 0.88, 0.74, 0.55, 0.20, -0.19, 0.00])
