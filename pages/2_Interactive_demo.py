@@ -246,15 +246,24 @@ def main():
 
         with tab1:
             outcome_utilities.container_details_prob_vs_time.\
-                compare_probs_with_time(
+                plot_probs_with_time(
+                    nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
+            outcome_utilities.container_details_prob_vs_time.\
+                table_probs_with_time(
                     nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
         with tab2:
             outcome_utilities.container_details_prob_vs_time.\
-                compare_probs_with_time(
+                plot_probs_with_time(
+                    lvo_ivt_case1_dict, lvo_ivt_case2_dict)
+            outcome_utilities.container_details_prob_vs_time.\
+                table_probs_with_time(
                     lvo_ivt_case1_dict, lvo_ivt_case2_dict)
         with tab3:
             outcome_utilities.container_details_prob_vs_time.\
-                compare_probs_with_time(
+                plot_probs_with_time(
+                    lvo_mt_case1_dict, lvo_mt_case2_dict)
+            outcome_utilities.container_details_prob_vs_time.\
+                table_probs_with_time(
                     lvo_mt_case1_dict, lvo_mt_case2_dict)
         with tab4:
             st.write('Nothing to see here.')
