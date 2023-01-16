@@ -1,3 +1,7 @@
+"""
+Functions to plot mRS probability distribution varition with time
+and to show tables of some important values.
+"""
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -107,8 +111,8 @@ def do_probs_with_time(
     fig.update_xaxes(title_text='Time since onset')
     fig.update_yaxes(title_text='Cumulative probability')
     fig.update_layout(legend_title='mRS')
-    # Format the x-axis tick labels to show hours and minutes:
-    fig.update_xaxes(tickformat="%H %M")
+    # Format x-axis tick labels to show hours (%H) and minutes (%M):
+    fig.update_xaxes(tickformat="%Hh %Mm")
 
     # Set axis limits:
     # Make the y-axis max a bit bigger than 1 to make sure the label

@@ -270,18 +270,69 @@ def main():
 
     # ----- Details 2: Cumulative changes -----
     with st.expander('2: Cumulative changes in mRS and utility'):
-        outcome_utilities.container_details_cumulative_changes.main(
-            nlvo_ivt_case1_dict,
-            nlvo_ivt_case2_dict,
-            lvo_ivt_case1_dict,
-            lvo_ivt_case2_dict,
-            lvo_mt_case1_dict,
-            lvo_mt_case2_dict,
-            case1_time_to_ivt,
-            case2_time_to_ivt,
-            case1_time_to_mt,
-            case2_time_to_mt
-            )
+        tab1, tab2, tab3, tab4 = st.tabs([
+            'nLVO treated with IVT',
+            'LVO treated with IVT only',
+            'LVO treated with MT',
+            'ICH'
+        ])
+
+        with tab1:
+            # nLVO IVT
+            st.subheader('Case 1')
+            outcome_utilities.container_details_cumulative_changes.\
+                draw_cumulative_changes(
+                    nlvo_ivt_case1_dict,
+                    case1_time_to_ivt,
+                    'nLVO_IVT_case1'
+                    )
+
+            st.subheader('Case 2')
+            outcome_utilities.container_details_cumulative_changes.\
+                draw_cumulative_changes(
+                    nlvo_ivt_case2_dict,
+                    case2_time_to_ivt,
+                    'nLVO_IVT_case2'
+                    )
+
+        with tab2:
+            # LVO IVT
+            st.subheader('Case 1')
+            outcome_utilities.container_details_cumulative_changes.\
+                draw_cumulative_changes(
+                    lvo_ivt_case1_dict,
+                    case1_time_to_ivt,
+                    'LVO_IVT_case1'
+                    )
+
+            st.subheader('Case 2')
+            outcome_utilities.container_details_cumulative_changes.\
+                draw_cumulative_changes(
+                    lvo_ivt_case2_dict,
+                    case2_time_to_ivt,
+                    'LVO_IVT_case2'
+                    )
+
+        with tab3:
+            # LVO MT
+            st.subheader('Case 1')
+            outcome_utilities.container_details_cumulative_changes.\
+                draw_cumulative_changes(
+                    lvo_mt_case1_dict,
+                    case1_time_to_mt,
+                    'LVO_MT_case1'
+                    )
+
+            st.subheader('Case 2')
+            outcome_utilities.container_details_cumulative_changes.\
+                draw_cumulative_changes(
+                    lvo_mt_case2_dict,
+                    case2_time_to_mt,
+                    'LVO_MT_case2'
+                    )
+
+        with tab4:
+            st.write('Nothing to see here.')
 
     # ----- Details 3: Sum up changes -----
     with st.expander('3: Calculations for overall changes in utility and mRS'):

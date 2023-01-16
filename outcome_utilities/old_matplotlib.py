@@ -274,3 +274,168 @@ def plot_probs_filled(
     ax.tick_params(top=True, bottom=True, left=True, right=True, which='both')
 
     ax.set_title(title)
+
+"""
+Functions for plotting mRS distributions as horizontal bars.
+"""
+import matplotlib.pyplot as plt
+
+
+def draw_horizontal_bar(dist,
+                        y=0, colour_list=[], hatch_list=[],
+                        ecolour_list=[], linewidth=None, bar_height=0.5,
+                        ax=None):
+    """
+    Draw a stacked horizontal bar chart of the values in 'dist'.
+
+    dist  - list or np.array. The probability distribution
+            (non-cumulative).
+    label - string. The name printed next to these stacked bars.
+    """
+    # Define any missing inputs:
+    if ax is None:
+        ax = plt.subplot()
+    if len(colour_list) < 1:
+        # Get current matplotlib style sheet colours:
+        colour_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        while len(colour_list) < len(dist):
+            # Shouldn't need this, but in case dist is really long:
+            colour_list += colour_list
+        # Remove extra colours:
+        colour_list = colour_list[:len(dist)-1]
+        # Add grey for mRS=6 bin:
+        colour_list.append('DarkSlateGray')
+    if len(hatch_list) < 1:
+        hatch_list = [None for d in dist]
+    if len(ecolour_list) < 1:
+        ecolour_list = ['k' for d in dist]
+
+    # The first bar will start at this point on the x-axis:
+    left = 0
+    for i in range(len(dist)):
+        # Don't add bar to legend if it has fancy hatch formatting:
+        # legend_label = f'{i%7}' if hatch_list[i]==None else None
+        legend_label = (
+            None
+            if hatch_list[i] is not None and '\\' in hatch_list[i]
+            else f'{i%7}'
+            )
+
+        # Draw a bar starting from 'left', the end of the previous bar,
+        # with a width equal to the probability of this mRS:
+        ax.barh(
+            y,
+            width=dist[i],
+            left=left,
+            height=bar_height,
+            label=legend_label,
+            edgecolor=ecolour_list[i],
+            color=colour_list[i],
+            hatch=hatch_list[i],
+            linewidth=linewidth,
+            # tick_label=label
+        )
+        # Update 'left' with the width of the current bar so that the
+        # next bar drawn will start in the correct place.
+        left += dist[i]
+
+
+# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+def draw_connections(dist_top, dist_bottom,
+                     top_of_bottom_bar=0.25, bottom_of_top_bar=0.75,
+                     colour='k', linewidth=1.0, ax=None):
+    """
+    Draw lines connecting the mRS bins in the top and bottom rows.
+
+    dist_t0, dist_tne - lists or arrays. Probability distributions.
+    top_tne, bottom_t0 - floats. y-coordinates just inside the bars.
+    """
+
+    # Define any missing inputs:
+    if ax is None:
+        ax = plt.subplot()
+
+    left_of_top_bar = 0.0
+    left_of_bottom_bar = 0.0
+    for i, d_t0 in enumerate(dist_top):
+        left_of_top_bar += dist_top[i]
+        left_of_bottom_bar += dist_bottom[i]
+        ax.plot([left_of_top_bar, left_of_bottom_bar],
+                [bottom_of_top_bar, top_of_bottom_bar],
+                color=colour, linewidth=linewidth)
+
+
+def do_prob_bars_matplotlib(
+        dist_dict,
+        mRS_dist_mix, weighted_added_utils,
+        mRS_list_time_input_treatment,
+        mRS_list_no_treatment, time_input, key_str=''
+        ):
+    # ----- Plot probability distributions -----
+    fig_bars_change, ax_bars = plt.subplots(figsize=(8, 2))
+
+    bar_height = 0.5
+    y_list = [2, 1, 0]
+    plot_bars(
+        [dist_dict['dist_pre_stroke'],
+         dist_dict['dist_time_input_treatment'],
+         dist_dict['dist_no_treatment']
+         ],
+        [dist_dict['dist_cumsum_pre_stroke'],
+         dist_dict['dist_cumsum_time_input_treatment'],
+         dist_dict['dist_cumsum_no_treatment']
+         ],
+        ax_bars, time_input, y_list, bar_height
+        )
+
+    top_of_bottom_bar = y_list[2]+bar_height*0.5
+    bottom_of_top_bar = y_list[1]-bar_height*0.5
+    for prob in mRS_dist_mix:
+        ax_bars.vlines(
+            prob, bottom_of_top_bar, top_of_bottom_bar,
+            color='silver', linestyle='-', zorder=0
+            )
+
+    # Extend xlims slightly to not cut off bar border colour.
+    ax_bars.set_xlim(-5e-3, 1.0+5e-3)
+    ax_bars.set_xlabel('Probability')
+    ax_bars.set_xticks(np.arange(0, 1.01, 0.2))
+    ax_bars.set_xticks(np.arange(0, 1.01, 0.05), minor=True)
+
+    st.pyplot(fig_bars_change)
+    
+
+def plot_bars(
+        dists_to_bar,
+        dists_cumsum_to_bar,
+        ax_bars,
+        time_input,
+        y_list,
+        bar_height
+        ):
+    y_labels = [
+        'Pre-stroke',
+        ('Treated at \n' + f'{time_input//60}hr ' +
+         f'{time_input%60:02d}min'),
+        'No treatment'
+        ]
+    # ^ keep formatting for e.g. 01 minutes in the middle bar
+    # otherwise the axis jumps about as the label changes size
+    # between "9 minutes" and "10 minutes" (extra character).
+
+    for i, dist in enumerate(dists_to_bar):
+        draw_horizontal_bar(
+            dist, y=y_list[i],
+            colour_list=colour_list, bar_height=0.5,
+            ax=ax_bars
+            )
+
+    ax_bars.set_yticks(y_list)
+    ax_bars.set_yticklabels(y_labels)
+
+    # Remove sides of the frame:
+    for spine in ['left', 'right', 'top']:
+        ax_bars.spines[spine].set_color(None)
+

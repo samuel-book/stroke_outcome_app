@@ -6,9 +6,6 @@ import numpy as np
 import streamlit as st
 import plotly.graph_objects as go
 
-# For importing the default plotly colours:
-import plotly.express as px
-
 from outcome_utilities.fixed_params import emoji_text_dict, plotly_colours
 
 

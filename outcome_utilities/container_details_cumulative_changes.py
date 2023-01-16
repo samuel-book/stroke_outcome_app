@@ -7,64 +7,7 @@ import pandas as pd
 
 from .fixed_params import colour_list, utility_weights
 from .added_utility_between_dists import find_added_utility_between_dists
-from .plot_dist import draw_horizontal_bar
-
-
-def main(
-        nlvo_ivt_case1_dict,
-        nlvo_ivt_case2_dict,
-        lvo_ivt_case1_dict,
-        lvo_ivt_case2_dict,
-        lvo_mt_case1_dict,
-        lvo_mt_case2_dict,
-        case1_time_to_ivt,
-        case2_time_to_ivt,
-        case1_time_to_mt,
-        case2_time_to_mt
-        ):
-
-    tab1, tab2, tab3, tab4 = st.tabs([
-        'nLVO treated with IVT',
-        'LVO treated with IVT only',
-        'LVO treated with MT',
-        'ICH'
-    ])
-
-    with tab1:
-        # nLVO IVT
-        st.subheader('The effect of treatment on mRS')
-        st.subheader('Case 1')
-        draw_cumulative_changes(
-            nlvo_ivt_case1_dict, case1_time_to_ivt, 'nLVO_IVT_case1')
-
-        st.subheader('Case 2')
-        draw_cumulative_changes(
-            nlvo_ivt_case2_dict, case2_time_to_ivt, 'nLVO_IVT_case2')
-
-    with tab2:
-        # LVO IVT
-        st.subheader('The effect of treatment on mRS')
-        st.subheader('Case 1')
-        draw_cumulative_changes(
-            lvo_ivt_case1_dict, case1_time_to_ivt, 'LVO_IVT_case1')
-
-        st.subheader('Case 2')
-        draw_cumulative_changes(
-            lvo_ivt_case2_dict, case2_time_to_ivt, 'LVO_IVT_case2')
-
-    with tab3:
-        # LVO MT
-        st.subheader('The effect of treatment on mRS')
-        st.subheader('Case 1')
-        draw_cumulative_changes(
-            lvo_mt_case1_dict, case1_time_to_mt, 'LVO_MT_case1')
-
-        st.subheader('Case 2')
-        draw_cumulative_changes(
-            lvo_mt_case2_dict, case2_time_to_mt, 'LVO_MT_case2')
-
-    with tab4:
-        st.write('Nothing to see here.')
+# from .plot_dist import draw_horizontal_bar
 
 
 def draw_cumulative_changes(dist_dict, treatment_time, key_str=''):
@@ -152,9 +95,9 @@ def do_prob_bars(
 
     fig.update_traces(
         hovertemplate=(
-            'mRS≤%{customdata[0]}: %{customdata[1]:.2f}' +
+            'mRS≤%{customdata[0]}: %{customdata[1]:.3f}' +
             '<br>' +
-            'mRS=%{customdata[0]}: %{x:.2f}'
+            'mRS=%{customdata[0]}: %{x:.3f}'
             # Remove content from secondary box:
             '<extra></extra>'
             )
@@ -200,47 +143,6 @@ def do_prob_bars(
     st.plotly_chart(fig, use_container_width=True)
 
 
-def do_prob_bars_matplotlib(
-        dist_dict,
-        mRS_dist_mix, weighted_added_utils,
-        mRS_list_time_input_treatment,
-        mRS_list_no_treatment, time_input, key_str=''
-        ):
-    # ----- Plot probability distributions -----
-    fig_bars_change, ax_bars = plt.subplots(figsize=(8, 2))
-
-    bar_height = 0.5
-    y_list = [2, 1, 0]
-    plot_bars(
-        [dist_dict['dist_pre_stroke'],
-         dist_dict['dist_time_input_treatment'],
-         dist_dict['dist_no_treatment']
-         ],
-        [dist_dict['dist_cumsum_pre_stroke'],
-         dist_dict['dist_cumsum_time_input_treatment'],
-         dist_dict['dist_cumsum_no_treatment']
-         ],
-        ax_bars, time_input, y_list, bar_height
-        )
-
-    top_of_bottom_bar = y_list[2]+bar_height*0.5
-    bottom_of_top_bar = y_list[1]-bar_height*0.5
-    for prob in mRS_dist_mix:
-        ax_bars.vlines(
-            prob, bottom_of_top_bar, top_of_bottom_bar,
-            color='silver', linestyle='-', zorder=0
-            )
-
-    # Extend xlims slightly to not cut off bar border colour.
-    ax_bars.set_xlim(-5e-3, 1.0+5e-3)
-    ax_bars.set_xlabel('Probability')
-    ax_bars.set_xticks(np.arange(0, 1.01, 0.2))
-    ax_bars.set_xticks(np.arange(0, 1.01, 0.05), minor=True)
-
-    st.pyplot(fig_bars_change)
-
-
-
 def write_latex_sums_for_weighted_mRS(
         weighted_added_utils,
         mRS_list_time_input_treatment,
@@ -267,39 +169,6 @@ def write_latex_sums_for_weighted_mRS(
 
     # Check:
     # st.write(weighted_added_utils[-1])
-
-
-def plot_bars(
-        dists_to_bar,
-        dists_cumsum_to_bar,
-        ax_bars,
-        time_input,
-        y_list,
-        bar_height
-        ):
-    y_labels = [
-        'Pre-stroke',
-        ('Treated at \n' + f'{time_input//60}hr ' +
-         f'{time_input%60:02d}min'),
-        'No treatment'
-        ]
-    # ^ keep formatting for e.g. 01 minutes in the middle bar
-    # otherwise the axis jumps about as the label changes size
-    # between "9 minutes" and "10 minutes" (extra character).
-
-    for i, dist in enumerate(dists_to_bar):
-        draw_horizontal_bar(
-            dist, y=y_list[i],
-            colour_list=colour_list, bar_height=0.5,
-            ax=ax_bars
-            )
-
-    ax_bars.set_yticks(y_list)
-    ax_bars.set_yticklabels(y_labels)
-
-    # Remove sides of the frame:
-    for spine in ['left', 'right', 'top']:
-        ax_bars.spines[spine].set_color(None)
 
 
 def build_latex_cumsum_string(
