@@ -1,9 +1,6 @@
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
-import plotly.express as px
 import plotly.graph_objects as go
-import pandas as pd
 
 from .fixed_params import colour_list, utility_weights
 from .added_utility_between_dists import find_added_utility_between_dists
@@ -23,15 +20,7 @@ def draw_cumulative_changes(dist_dict, treatment_time, key_str=''):
         '"mRS distributions at the treatment times" section above ' +
         'to create these bar charts of mRS probability distributions:'
         )
-    do_prob_bars(
-        dist_dict,
-        mRS_dist_mix,
-        weighted_added_utils,
-        mRS_list_time_input_treatment,
-        mRS_list_no_treatment,
-        treatment_time,
-        key_str
-        )
+    do_prob_bars(dist_dict, treatment_time)
     time_input_str = f'{treatment_time//60}hr {treatment_time%60}min'
     st.write(
         'The weighted mean utility and mRS is calculated using ' +
@@ -47,66 +36,76 @@ def draw_cumulative_changes(dist_dict, treatment_time, key_str=''):
             )
 
 
-def do_prob_bars(
-        dist_dict,
-        mRS_dist_mix, weighted_added_utils,
-        mRS_list_time_input_treatment,
-        mRS_list_no_treatment, time_input, key_str=''
-        ):
-
-    dists = ['dist_no_treatment', 'dist_time_input_treatment', 'dist_pre_stroke']
-    cum_dists = ['dist_cumsum_no_treatment', 'dist_cumsum_time_input_treatment', 'dist_cumsum_pre_stroke']
-
+def do_prob_bars(dist_dict, time_input):
+    # Get the information from these keys in the input dist_dict:
+    dists = [
+        'dist_no_treatment',
+        'dist_time_input_treatment',
+        'dist_pre_stroke'
+        ]
+    cum_dists = [
+        'dist_cumsum_no_treatment',
+        'dist_cumsum_time_input_treatment',
+        'dist_cumsum_pre_stroke'
+        ]
+    # Choose labels for the bars:
     y_labels = [
         'No treatment',
-        ('Treated at \n' + f'{time_input//60}hr ' +
-         f'{time_input%60:02d}min'),
+        'Treated at\n' + f'{time_input//60}hr ' + f'{time_input%60:02d}min',
         'Pre-stroke'
         ]
-    # ^ keep formatting for e.g. 01 minutes in the middle bar
+    # ^ keep label formatting for e.g. 01 minutes in the middle bar
     # otherwise the axis jumps about as the label changes size
     # between "9 minutes" and "10 minutes" (extra character).
 
-    fig = go.Figure()
+    # Place the bars at these locations:
     y_vals = [0, 1, 2]
 
+    fig = go.Figure()
+    # Add the stacked bar for each distribution as a separate trace.
     for i, dist in enumerate(dists):
+        # Only add the mRS colours to the legend if this is the
+        # first go round the loop.
         show_legend = False if i > 0 else True
+        # Draw each bar individually to pick the colours we want:
         for mRS in np.arange(7):
+            # Put mRS label and cumulative probability value in
+            # custom data array for use in the hover label:
             custom_data = np.stack((
                 [mRS],
                 [dist_dict[cum_dists[i]][mRS]],
-                # [y_labels[i]],
             ), axis=-1)
+            # Draw the bar:
             fig.add_trace(go.Bar(
-                x=[dist_dict[dists[i]][mRS]],
+                x=[dist_dict[dist][mRS]],
                 y=[y_vals[i]],
                 marker=dict(color=colour_list[mRS]),
-                orientation='h',
-                name=str(mRS),
-                showlegend=show_legend,
+                orientation='h',         # horizontal
+                name=str(mRS),           # name for legend
+                showlegend=show_legend,  # True/False appear in legend
                 customdata=custom_data,
-                width=0.7  # Skinniness of bars
+                width=0.7                # Skinniness of bars
             ))
+    # The custom_data aren't directly plotted in the previous lines,
+    # but are loaded ready for use with the hover template later.
 
     # Change the bar mode
     fig.update_layout(barmode='stack')
 
-
+    # Update message displayed on hover:
     fig.update_traces(
         hovertemplate=(
             'mRS≤%{customdata[0]}: %{customdata[1]:.3f}' +
-            '<br>' +
-            'mRS=%{customdata[0]}: %{x:.3f}'
-            # Remove content from secondary box:
-            '<extra></extra>'
+            '<br>' +               # (line break)
+            'mRS=%{customdata[0]}: %{x:.3f}' +
+            '<extra></extra>'      # Remove content from secondary box.
             )
     )
 
     # Set axis labels:
     fig.update_xaxes(title_text='Cumulative probability')
-    # fig.update_yaxes(title_text='Cumulative probability')
-    fig.update_layout(legend_title='mRS')  #, title_x=0.5)
+    fig.update_layout(legend_title='mRS')
+    # Y tick labels:
     fig.update_layout(yaxis=dict(
         tickmode='array',
         tickvals=y_vals,
@@ -115,8 +114,8 @@ def do_prob_bars(
 
     # Format legend:
     fig.update_layout(legend=dict(
-        orientation='h',
-        traceorder='reversed',  # Show mRS=0 on left
+        orientation='h',      # horizontal
+        traceorder='normal',  # Show mRS=0 on left
         # Location:
         x=1.0,
         y=1.3,
@@ -130,7 +129,7 @@ def do_prob_bars(
     # Set axis limits:
     # (give breathing room for the bar borders to be drawn)
     fig.update_xaxes(range=[0 - 1e-2, 1 + 1e-2])
-    fig.update_yaxes(range=[-0.4, 2.4])
+    fig.update_yaxes(range=[min(y_vals) - 0.4, max(y_vals) + 0.4])
 
     # Remove grid lines and x=0, y=0 lines:
     fig.update_xaxes(zeroline=False, showgrid=False)

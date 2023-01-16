@@ -2,8 +2,6 @@
 # in the container for probability vs time.  
 # ---------------------------------------------------------------------
 
-## Probability variation with time
-
 The mRS probability distributions are a concoction of various sources of data. The full details are given in [this document: "mRS distributions..."](https://github.com/samuel-book/stroke_outcome/blob/main/mRS_datasets_full.ipynb)
 
 The boundaries between the mRS bins follow the shape of a logistic function. For details, see [this document: "Mathematics..."](https://github.com/samuel-book/stroke_outcome/blob/main/mRS_outcomes_maths.ipynb).
