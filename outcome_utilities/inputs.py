@@ -179,6 +179,74 @@ def inputs_pathway(pathway_cols):
             case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt)
 
 
+def inputs_simple_times(pathway_cols):
+    # All fixed times have units of minutes
+    # pathway_cols = st.columns(3)
+
+    # Column 1
+    with pathway_cols[0]:
+        st.markdown('__Case 1:__')
+        case1_ivt_input = st.number_input(
+            label='Time to IVT',
+            min_value=0,
+            max_value=600,
+            value=180,
+            step=5,
+            key='Case1_IVT'
+            )
+        case1_mt_input = st.number_input(
+            label='Time to MT',
+            min_value=0,
+            max_value=600,
+            value=240,
+            step=5,
+            key='Case1_MT'
+            )
+
+
+    # Column 1
+    with pathway_cols[1]:
+        st.markdown('__Case 2:__')
+        case2_ivt_input = st.number_input(
+            label='Time to IVT',
+            min_value=0,
+            max_value=600,
+            value=210,
+            step=5,
+            key='Case2_IVT'
+            )
+        case2_mt_input = st.number_input(
+            label='Time to MT',
+            min_value=0,
+            max_value=600,
+            value=270,
+            step=5,
+            key='Case2_MT'
+            )
+
+    # ----- end of inputs -----
+
+    case1_time_to_ivt = case1_ivt_input
+    case1_time_to_mt = case1_mt_input
+    case2_time_to_ivt = case2_ivt_input
+    case2_time_to_mt = case2_mt_input
+
+    case1_time_dict = dict(
+        onset=0,
+        time_to_ivt=case1_time_to_ivt,
+        time_to_mt=case1_time_to_mt
+    )
+
+    case2_time_dict = dict(
+        onset=0,
+        time_to_ivt=case2_time_to_ivt,
+        time_to_mt=case2_time_to_mt
+    )
+
+    return (case1_time_dict, case2_time_dict, case1_time_to_ivt,
+            case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt)
+
+
 def inputs_patient_population():
     with st.form(key='form_props'):
         st.write('Percentage of patients with each stroke type:')

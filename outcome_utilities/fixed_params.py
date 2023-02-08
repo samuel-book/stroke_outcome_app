@@ -66,6 +66,8 @@ emoji_dict = dict(
     transfer_additional_delay=':ambulance:',  # ':hourglass_flowing_sand:',
     travel_ivt_to_mt=':hospital:',
     mt_arrival_to_treatment=':wrench:',
+    time_to_ivt=':syringe:',
+    time_to_mt=':wrench:'
 )
 
 emoji_text_dict = dict(
@@ -77,6 +79,8 @@ emoji_text_dict = dict(
     transfer_additional_delay='\U0001f691',
     travel_ivt_to_mt='\U0001f3e5',
     mt_arrival_to_treatment='\U0001f527',
+    time_to_ivt='\U0001f489',
+    time_to_mt='\U0001f527'
 )
 
 # Other emoji: 💊

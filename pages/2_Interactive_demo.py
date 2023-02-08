@@ -27,7 +27,8 @@ except ModuleNotFoundError:
 # Custom functions:
 import outcome_utilities.inputs
 from outcome_utilities.inputs import write_text_from_file
-from outcome_utilities.plot_timeline import make_timeline_plot
+from outcome_utilities.plot_timeline import \
+    make_timeline_plot, plot_simple_map
 from outcome_utilities.fixed_params import \
     page_setup, utility_weights, emoji_text_dict
 
@@ -46,30 +47,16 @@ def main():
 
     page_setup()
 
-    # Write text at the top of the page:
-    st.markdown('# Interactive demo')
-    st.info(
-        ':information_source: ' +
-        'For acronym reference, see the introduction page.'
-        )
-    write_text_from_file('pages/text_for_pages/2_Intro_for_demo.txt',
-                         head_lines_to_skip=2)
-    # Write these in columns:
-    cols_cases = st.columns(2)
-    with cols_cases[0]:
-        st.markdown(''.join([
-            '__Case 1:__ all eligible patients ',
-            'receive IVT at the IVT-only centre, ',
-            'and then patients requiring MT ',
-            'are transported to the IVT+MT centre ',
-            'for further treatment.'
-        ]))
-    with cols_cases[1]:
-        st.markdown(''.join([
-            '__Case 2:__ all patients are transported ',
-            'directly to the IVT+MT centre ',
-            'and receive the appropriate treatments there.'
-        ]))
+    container_intro = st.container()
+    with container_intro:
+        # Write text at the top of the page:
+        st.markdown('# Interactive demo')
+        st.info(
+            ':information_source: ' +
+            'For acronym reference, see the introduction page.'
+            )
+        write_text_from_file('pages/text_for_pages/2_Intro_for_demo.txt',
+                            head_lines_to_skip=2)
 
 
     # ###########################
@@ -122,21 +109,33 @@ def main():
             container_pathway_inputs = st.container()
 
         with container_pathway_inputs:
-            # Take the inputs:
-            st.write(
-                'Each step uses times in minutes. ' +
-                'To remove a step, set the value to zero.'
-                )
+            time_input_type = st.radio(
+                'Time input method:',
+                ['Pathway', 'Simple'],
+                horizontal=True
+            )
             # Split the input widgets into two columns:
             cols_timeline = st.columns([1, 1])
-            # Return the dictionaties and some useful times:
-            (case1_time_dict, case2_time_dict, case1_time_to_ivt,
-             case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = \
-                outcome_utilities.inputs.inputs_pathway(cols_timeline)
+            if time_input_type == 'Pathway':
+                # Take the inputs:
+                st.write(
+                    'Each step uses times in minutes. ' +
+                    'To remove a step, set the value to zero.'
+                    )
+                # Return the dictionaties and some useful times:
+                (case1_time_dict, case2_time_dict, case1_time_to_ivt,
+                case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = \
+                    outcome_utilities.inputs.inputs_pathway(cols_timeline)
+            else:
+                st.markdown('Choose the times in minutes.')
+                # Return the dictionaties and some useful times:
+                (case1_time_dict, case2_time_dict, case1_time_to_ivt,
+                case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = \
+                    outcome_utilities.inputs.inputs_simple_times(cols_timeline)
 
         with container_pathway_plot:
             # Draw timelines
-            make_timeline_plot([case1_time_dict, case2_time_dict])
+            make_timeline_plot([case1_time_dict, case2_time_dict], time_input_type)
 
         # Now display the final times to IVT and MT
         # in the box we placed earlier:
@@ -168,6 +167,37 @@ def main():
                     f' MT: {case2_time_to_mt//60}hr ' +
                     f'{case2_time_to_mt%60}min'
                 )
+
+    with container_intro:
+        if time_input_type == 'Pathway':
+            # Draw a map
+            cols_cases = st.columns(3)
+            i = 1
+            with cols_cases[0]:
+                plot_simple_map(
+                    case1_time_dict['travel_to_ivt'],
+                    case1_time_dict['travel_ivt_to_mt'],
+                    case2_time_dict['travel_to_mt'],
+                    )
+        else:
+            cols_cases = st.columns(2)
+            i = 0
+
+        # Write these in columns:
+        with cols_cases[i + 0]:
+            st.markdown(''.join([
+                '__Case 1:__ all eligible patients ',
+                'receive IVT at the IVT-only centre, ',
+                'and then patients requiring MT ',
+                'are transported to the IVT+MT centre ',
+                'for further treatment.'
+            ]))
+        with cols_cases[i + 1]:
+            st.markdown(''.join([
+                '__Case 2:__ all patients are transported ',
+                'directly to the IVT+MT centre ',
+                'and receive the appropriate treatments there.'
+            ]))
 
     # ##################################
     # ########## CALCULATIONS ##########
