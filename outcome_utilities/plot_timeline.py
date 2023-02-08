@@ -209,6 +209,21 @@ def make_timeline_plot(time_dicts, input_type='Pathway'):
 
 
 def plot_simple_map(travel_to_ivt, travel_ivt_to_mt, travel_to_mt):
+    # Emoji for the centres:
+    emoji = ['', '\U0001f3e5', '\U0001f3e5']
+    # Labels for the centres:
+    labels = [
+        'Onset<br>location',
+        'IVT<br>centre',
+        'IVT+MT<br>centre'
+        ]
+    # Labels for the lines linking the centres:
+    labels_link = [
+        f'{travel_to_ivt}' + '<br> \U0001f691',
+        '\U0001f691 <br>' + f'{travel_ivt_to_mt}',
+        '\U0001f691 <br>' + f'{travel_to_mt}',
+        ]
+
     # Work out the coordinates.
     coords_onset = [0.0, 0.0]
     coords_ivt = [travel_to_ivt, 0.0]
@@ -216,23 +231,46 @@ def plot_simple_map(travel_to_ivt, travel_ivt_to_mt, travel_to_mt):
     # travel to mt from onset and
     # travel from ivt to mt.
     # Use cosine rule to find the angle we need:
-    th = np.arccos(
-        (travel_to_ivt**2.0 + travel_to_mt**2.0 - travel_ivt_to_mt**2.0) /
-        (2 * travel_to_ivt * travel_to_mt)
-        )
-    if np.isnan(th) == True:
-        # ^ linter complains, but it breaks if you change this
-        #   == to "is".
-        # Can't draw this map!
-        st.caption('''
-            (Sorry - the requested travel times between hospitals
-            are impossible to draw on this simple grid.)
-            ''')
-        return
-    else:
-        # Use this to generate the coordinates:
-        coords_mt = [travel_to_mt * np.cos(th), -travel_to_mt * np.sin(th)]
-    # coords_mt = [travel_to_mt * np.cos(th), travel_to_mt * np.sin(th)]
+    try:
+        th = np.arccos(
+            (travel_to_ivt**2.0 + travel_to_mt**2.0 - travel_ivt_to_mt**2.0) /
+            (2 * travel_to_ivt * travel_to_mt)
+            )
+        if np.isnan(th) == True:
+            # ^ linter complains, but it breaks if you change this
+            #   == to "is".
+            # Can't draw this map!
+            st.caption('''
+                (Sorry - the requested travel times between hospitals
+                are impossible to draw on this simple grid.)
+                ''')
+            return
+        else:
+            # Use this to generate the coordinates:
+            coords_mt = [travel_to_mt * np.cos(th), -travel_to_mt * np.sin(th)]
+        # The length of the horizontal line:
+        h_travel = travel_to_ivt
+    except ZeroDivisionError:
+        # Either travel to IVT or to MT is zero.
+        # So remove the label for the onset location:
+        labels[0] = ''
+        labels_link[1] = ''
+        # Set the coordinates along a straight line
+        # and remove any labels along the link that doesn't exist anymore.
+        if travel_to_ivt == 0.0:
+            coords_ivt = [0.0, 0.0]
+            labels_link[0] = ''
+            coords_mt = [travel_to_mt, 0.0]
+            # The length of the horizontal line:
+            h_travel = travel_to_mt
+        else:
+            coords_mt = [0.0, 0.0]
+            labels_link[2] = ''
+            # The length of the horizontal line:
+            h_travel = travel_to_ivt
+        # Set some angle for scaling the label offsets later:
+        th = np.pi * 0.5
+
     all_coords = [coords_onset, coords_ivt, coords_mt]
 
     # Use coords to define axis limits.
@@ -240,18 +278,20 @@ def plot_simple_map(travel_to_ivt, travel_ivt_to_mt, travel_to_mt):
     x_max = np.max(np.array(all_coords).ravel()[::2])
     y_max = np.max(np.array(all_coords).ravel()[1::2])
     y_min = np.min(np.array(all_coords).ravel()[1::2])
-
+    # Find the extent of the grid for label placement:
     x_span = x_max - x_min
     y_span = y_max - y_min
 
+    # Set label placements:
+    label_offset = y_span*0.2
+    # If this offset is small compared with the width of the plot,
+    # reset it to something larger:
+    if label_offset < 0.15*h_travel:
+        label_offset = 0.15*h_travel
+    label_y_offsets = [label_offset, label_offset, -label_offset]
+
     fig = go.Figure()
 
-    labels = ['Onset<br>location', 'IVT<br>centre', 'IVT+MT<br>centre']
-    label_offset = y_span*0.2
-    if label_offset < 0.15*travel_to_ivt:
-        label_offset = 0.15*travel_to_ivt
-    label_y_offsets = [label_offset, label_offset, -label_offset]
-    emoji = ['', '\U0001f3e5', '\U0001f3e5']
     for i, coords in enumerate(all_coords):
         # Draw marker
         fig.add_trace(go.Scatter(
@@ -298,11 +338,6 @@ def plot_simple_map(travel_to_ivt, travel_ivt_to_mt, travel_to_mt):
         label_offset * 0.5,
         0.0,
         0.0
-        ]
-    labels_link = [
-        f'{travel_to_ivt}' + '<br> \U0001f691',
-        '\U0001f691 <br>' + f'{travel_ivt_to_mt}',
-        '\U0001f691 <br>' + f'{travel_to_mt}',
         ]
 
     for i, coords in enumerate(coords_links):
