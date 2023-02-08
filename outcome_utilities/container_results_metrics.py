@@ -55,7 +55,7 @@ def draw_metrics(
     cols = st.columns(3)
 
     # Column 0: Times
-    cols[0].write('Treatment times')
+    cols[0].caption('Treatment times')
     cols[0].write(
         emoji_text_dict['ivt_arrival_to_treatment'] +
         f' IVT: {time_to_ivt//60}hr {time_to_ivt%60}min'

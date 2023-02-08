@@ -51,7 +51,7 @@ def do_prob_bars(dist_dict, time_input):
     # Choose labels for the bars:
     y_labels = [
         'No treatment',
-        'Treated at\n' + f'{time_input//60}hr ' + f'{time_input%60:02d}min',
+        'Treated at ' + f'{time_input//60}hr ' + f'{time_input%60:02d}min',
         'Pre-stroke'
         ]
     # ^ keep label formatting for e.g. 01 minutes in the middle bar
@@ -118,12 +118,14 @@ def do_prob_bars(dist_dict, time_input):
         traceorder='normal',  # Show mRS=0 on left
         # Location:
         x=1.0,
-        y=1.3,
+        y=3,
         yanchor='bottom',
         xanchor='right',
         # Remove interactive legend (clicking to highlight or hide):
         itemclick=False,
-        itemdoubleclick=False
+        itemdoubleclick=False,
+        # Fiddle with size of each entry to change legend width
+        entrywidth=2,
         ))
 
     # Set axis limits:
@@ -136,10 +138,36 @@ def do_prob_bars(dist_dict, time_input):
     fig.update_yaxes(zeroline=False, showgrid=False)
 
     # Make plot less tall:
-    fig.update_layout(margin=dict(t=50, b=0), height=150)
+    fig.update_layout(margin=dict(
+        # t=50, 
+        b=0), height=200)
+
+    # Disable zoom and pan:
+    fig.update_layout(xaxis=dict(fixedrange=True),
+                      yaxis=dict(fixedrange=True))
+
+    # Turn off legend click events
+    # (default is click on legend item, remove that item from the plot)
+    fig.update_layout(legend_itemclick=False)
+
+    # Options for the mode bar.
+    # (which doesn't appear on touch devices.)
+    plotly_config = {
+        # Mode bar always visible:
+        # 'displayModeBar': True,
+        # Plotly logo in the mode bar:
+        'displaylogo': False,
+        # Remove the following from the mode bar:
+        'modeBarButtonsToRemove': [
+            'zoom', 'pan', 'select', 'zoomIn', 'zoomOut', 'autoScale',
+            'lasso2d'
+            ],
+        # Options when the image is saved:
+        'toImageButtonOptions': {'height': None, 'width': None},
+        }
 
     # Write to streamlit:
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config=plotly_config)
 
 
 def write_latex_sums_for_weighted_mRS(

@@ -120,7 +120,10 @@ def do_probs_with_time(
     fig.update_yaxes(range=[0, 1 + 1e-2])
     # Convert x limits to datetime to match the plotted data:
     x_min = pd.to_datetime(0.0, unit='m')
-    x_max = pd.to_datetime(time_no_effect_mt, unit='m')
+    # Give breating room to allow an empty space with no hover label
+    # so that on touch devices there's a space to touch that removes
+    # the current label.
+    x_max = pd.to_datetime(time_no_effect_mt + 60, unit='m')
     fig.update_xaxes(range=[x_min, x_max], constrain='domain')
 
     # Hover settings:
@@ -157,6 +160,22 @@ def do_probs_with_time(
             textangle=-45
             )
 
+    # Format legend:
+    fig.update_layout(legend=dict(
+        orientation='h',      # horizontal
+        traceorder='normal',  # Show mRS=0 on left
+        # Location:
+        x=1.0,
+        y=1.3,
+        yanchor='bottom',
+        xanchor='right',
+        # Remove interactive legend (clicking to highlight or hide):
+        itemclick=False,
+        itemdoubleclick=False,
+        # Fiddle with size of each entry to change legend width
+        entrywidth=2,
+        ))
+
     # Remove grid lines:
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=False)
@@ -167,10 +186,34 @@ def do_probs_with_time(
         constrain='domain'
     )
     # Reduce size of figure by adjusting margins:
-    fig.update_layout(margin=dict(b=0, t=30), height=250)
+    fig.update_layout(margin=dict(b=0, t=30), height=300)
+
+    # Disable zoom and pan:
+    fig.update_layout(xaxis=dict(fixedrange=True),
+                      yaxis=dict(fixedrange=True))
+
+    # Turn off legend click events
+    # (default is click on legend item, remove that item from the plot)
+    fig.update_layout(legend_itemclick=False)
+
+    # Options for the mode bar.
+    # (which doesn't appear on touch devices.)
+    plotly_config = {
+        # Mode bar always visible:
+        # 'displayModeBar': True,
+        # Plotly logo in the mode bar:
+        'displaylogo': False,
+        # Remove the following from the mode bar:
+        'modeBarButtonsToRemove': [
+            'zoom', 'pan', 'select', 'zoomIn', 'zoomOut', 'autoScale',
+            'lasso2d'
+            ],
+        # Options when the image is saved:
+        'toImageButtonOptions': {'height': None, 'width': None},
+        }
 
     # Write to streamlit:
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config=plotly_config)
 
 
 def table_probs_with_time(dict1, dict2):
