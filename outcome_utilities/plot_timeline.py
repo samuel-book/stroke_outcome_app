@@ -24,7 +24,7 @@ def make_timeline_plot(time_dicts):
     # Set up x values for the timelines, labels, and emoji:
     x_vals = [0, 1.2]
     label_offset = 0.6
-    emoji_offset = 0.1
+    emoji_offset = 0.0
     # For the y-axis limit, set up y_max and update it with the largest
     # cumulative time to plot.
     y_max = 0.0
@@ -91,7 +91,7 @@ def make_timeline_plot(time_dicts):
             y=time_cum_list,
             x=[x] * len(time_cum_list),
             mode='lines+markers',
-            marker=dict(size=12, symbol='line-ew-open'),
+            marker=dict(size=6, symbol='line-ew-open'),
             line=dict(color='grey'),    # OK in light and dark mode.
             showlegend=False,
             customdata=np.stack((time_cum_str_list, labels_plain), axis=-1)
@@ -125,7 +125,7 @@ def make_timeline_plot(time_dicts):
                     x=x + label_offset,
                     text=text,
                     showarrow=False,
-                    font=dict(color=time_colour_list[t]),
+                    font=dict(color=time_colour_list[t], size=10),
                     )
                 # Add emoji for each scatter marker
                 fig.add_annotation(
@@ -144,7 +144,11 @@ def make_timeline_plot(time_dicts):
     fig.update_yaxes(range=[y_max * 1.05, 0 - y_max * 0.025])
     # Set y-axis label
     fig.update_yaxes(title_text='Time since onset (hours)')
+    # Change y-axis title font size:
+    fig.update_yaxes(title_font_size=10)
 
+    # Set x range:
+    fig.update_xaxes(range=[-0.1, 2.5])
     # Set x-axis labels
     fig.update_layout(
         xaxis=dict(
@@ -159,9 +163,9 @@ def make_timeline_plot(time_dicts):
     fig.update_yaxes(zeroline=False, showgrid=False)
     fig.update_xaxes(zeroline=False, showgrid=False)
 
+
     # Reduce size of figure by adjusting margins:
     fig.update_layout(margin=dict(l=0, r=0, b=0, t=0), height=500)
-
 
     # Disable zoom and pan:
     fig.update_layout(xaxis=dict(fixedrange=True),

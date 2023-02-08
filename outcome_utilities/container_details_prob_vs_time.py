@@ -163,7 +163,8 @@ def do_probs_with_time(
     # Format legend:
     fig.update_layout(legend=dict(
         orientation='h',      # horizontal
-        traceorder='normal',  # Show mRS=0 on left
+        # traceorder='normal',  # Show mRS=0 on left,
+        #                       # but also mRS=0 on bottom on hover :(
         # Location:
         x=1.0,
         y=1.3,
@@ -218,14 +219,15 @@ def do_probs_with_time(
 
 def table_probs_with_time(dict1, dict2):
     # # Tabulate mRS bins
-    st.write(
-        'The following table contains the probability distributions ' +
-        'at key points from the probability vs. time graph above.'
+    st.markdown('''
+        The following table contains the probability distributions
+        at key points.
+        '''
         )
     df_combo = make_combo_mRS_bin_dataframe(
         dict1['df_dists_bins'], dict2['df_dists_bins'],
         dict1['treatment_time'], dict2['treatment_time'])
-    st.dataframe(df_combo)
+    st.dataframe(df_combo, use_container_width=True)
 
 
 def make_combo_mRS_bin_dataframe(df1, df2, treatment_time1, treatment_time2):

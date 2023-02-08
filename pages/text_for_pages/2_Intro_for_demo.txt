@@ -5,6 +5,3 @@ In this demo we will compare the expected outcomes for two cases. All of the pat
 
 We have invented a scenario where there is a choice of two hospitals for the patients to travel to. One of these can only provide IVT, while the other provides both IVT and MT.
 
-__Case 1:__ all eligible patients receive IVT at the IVT-only centre, and then patients requiring MT are transported to the IVT+MT centre for further treatment.
-
-__Case 2:__ all patients are transported directly to the IVT+MT centre and receive the appropriate treatments there.

@@ -23,57 +23,70 @@ def main(
     """
     Main code for filling the container.
     """
-    st.write(
-        'For each group, the weighted change is equal to the product ' +
-        'of the following:\n' +
-        '+ proportion with this stroke type (%)\n' +
-        '+ proportion receiving this treatment (%)\n' +
-        '+ total change across this population\n' +
-        'The final change given in the Results section above ' +
-        'is the sum of the weighted changes.'
+    st.markdown(
+        '''
+        In the following sums, the groups always appear in this order:
+        + nLVO treated with IVT
+        + LVO treated with IVT
+        + LVO treated with MT
+
+        For each group, the weighted change is equal to the product
+        of the following:
+        + proportion with this stroke type (%)
+        + proportion receiving this treatment (%)
+        + total change across this population
+        The final change given in the Results section above
+        is the sum of the weighted changes.
+        '''
         )
 
     st.subheader('__Case 1__')
-    st.write('Change in mRS:')
-    print_change_sums(
-        prop_dict,
-        mean_mRS_dict_nlvo_ivt_case1,
-        mean_mRS_dict_lvo_ivt_case1,
-        mean_mRS_dict_lvo_mt_case1,
-        )
-    # st.text('Check:' + f'{mean_mRS_change_case1:22.2f}')
-    st.text(' ')
+    cols_case1 = st.columns(2)
+    with cols_case1[0]:
+        st.write('Change in mRS:')
+        print_change_sums(
+            prop_dict,
+            mean_mRS_dict_nlvo_ivt_case1,
+            mean_mRS_dict_lvo_ivt_case1,
+            mean_mRS_dict_lvo_mt_case1,
+            )
+        # st.text('Check:' + f'{mean_mRS_change_case1:22.2f}')
+    # st.text(' ')
 
-    st.write('Change in utility:')
-    print_change_sums(
-        prop_dict,
-        mean_util_dict_nlvo_ivt_case1,
-        mean_util_dict_lvo_ivt_case1,
-        mean_util_dict_lvo_mt_case1,
-        util=True
-        )
-    # st.text('Check:' + f'{mean_util_change_case1:22.3f}')
+    with cols_case1[1]:
+        st.write('Change in utility:')
+        print_change_sums(
+            prop_dict,
+            mean_util_dict_nlvo_ivt_case1,
+            mean_util_dict_lvo_ivt_case1,
+            mean_util_dict_lvo_mt_case1,
+            util=True
+            )
+        # st.text('Check:' + f'{mean_util_change_case1:22.3f}')
     st.text(' ')
 
     st.subheader('__Case 2__')
-    st.write('Change in mRS:')
-    print_change_sums(
-        prop_dict,
-        mean_mRS_dict_nlvo_ivt_case2,
-        mean_mRS_dict_lvo_ivt_case2,
-        mean_mRS_dict_lvo_mt_case2,
-        )
-    # st.text('Check:' + f'{mean_mRS_change_case2:22.2f}')
-    st.text(' ')
+    cols_case2 = st.columns(2)
+    with cols_case2[0]:
+        st.write('Change in mRS:')
+        print_change_sums(
+            prop_dict,
+            mean_mRS_dict_nlvo_ivt_case2,
+            mean_mRS_dict_lvo_ivt_case2,
+            mean_mRS_dict_lvo_mt_case2,
+            )
+        # st.text('Check:' + f'{mean_mRS_change_case2:22.2f}')
+    # st.text(' ')
 
-    st.write('Change in utility:')
-    print_change_sums(
-        prop_dict,
-        mean_util_dict_nlvo_ivt_case2,
-        mean_util_dict_lvo_ivt_case2,
-        mean_util_dict_lvo_mt_case2,
-        util=True
-        )
+    with cols_case2[1]:
+        st.write('Change in utility:')
+        print_change_sums(
+            prop_dict,
+            mean_util_dict_nlvo_ivt_case2,
+            mean_util_dict_lvo_ivt_case2,
+            mean_util_dict_lvo_mt_case2,
+            util=True
+            )
 
 
 def print_change_sums(
@@ -86,15 +99,15 @@ def print_change_sums(
 
     cumulative_changes = 0.0
     big_p_str = r'''\begin{align*}'''
-    # Add column headings:
-    big_p_str += (
-        r''' & & \mathrm{Proportion} & & \mathrm{Proportion} & &''' +
-        r''' \mathrm{Weighted} \\'''
-        )
-    big_p_str += (
-        r''' & & \mathrm{with\ type} & & \mathrm{treated} & &''' +
-        r''' \mathrm{change}  \\'''
-        )
+    # # Add column headings:
+    # big_p_str += (
+    #     r''' & & \mathrm{Proportion} & & \mathrm{Proportion} & &''' +
+    #     r''' \mathrm{Weighted} \\'''
+    #     )
+    # big_p_str += (
+    #     r''' & & \mathrm{with\ type} & & \mathrm{treated} & &''' +
+    #     r''' \mathrm{change}  \\'''
+    #     )
 
     big_p_str, outcome_total, outcome_total_modified = \
         build_latex_combo_change_string(
@@ -102,7 +115,7 @@ def print_change_sums(
             prop_dict['nlvo_treated_ivt_only'],
             mean_dict_nlvo_ivt['diff_no_treatment'],
             util,
-            r'''\mathrm{nLVO\ with\ IVT:}''',
+            '',  # r'''\mathrm{nLVO\ with\ IVT:}''',
             big_p_str
             )
     cumulative_changes += outcome_total
@@ -113,7 +126,7 @@ def print_change_sums(
             prop_dict['lvo_treated_ivt_only'],
             mean_dict_lvo_ivt['diff_no_treatment'],
             util,
-            r'''\mathrm{LVO\ with\ IVT:}''',
+            '',  # r'''\mathrm{LVO\ with\ IVT:}''',
             big_p_str
             )
     cumulative_changes += outcome_total
@@ -124,7 +137,7 @@ def print_change_sums(
             prop_dict['lvo_treated_ivt_mt'],
             mean_dict_lvo_mt['diff_no_treatment'],
             util,
-            r'''\mathrm{LVO\ with\ MT:}''',
+            '',  # r'''\mathrm{LVO\ with\ MT:}''',
             big_p_str
         )
     cumulative_changes += outcome_total

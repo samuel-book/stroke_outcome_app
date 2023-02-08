@@ -15,19 +15,9 @@ def draw_cumulative_changes(dist_dict, treatment_time, key_str=''):
             dist_dict['dist_cumsum_time_input_treatment'],
             dist_dict['dist_cumsum_no_treatment']
             )
-    st.write(
-        'We can draw some of the data from the table in the ' +
-        '"mRS distributions at the treatment times" section above ' +
-        'to create these bar charts of mRS probability distributions:'
-        )
     do_prob_bars(dist_dict, treatment_time)
     time_input_str = f'{treatment_time//60}hr {treatment_time%60}min'
-    st.write(
-        'The weighted mean utility and mRS is calculated using ' +
-        'those regions of the chart where the mRS is different ' +
-        'between the "No treatment" and "Treated at ' +
-        time_input_str + '" bars.'
-        )
+
     write_latex_sums_for_weighted_mRS(
             weighted_added_utils,
             mRS_list_time_input_treatment,
@@ -176,23 +166,26 @@ def write_latex_sums_for_weighted_mRS(
         mRS_list_no_treatment,
         mRS_dist_mix
         ):
-    st.write('Sums for the cumulative weighted mRS:')
-    big_p_str = build_latex_cumsum_string(
-            weighted_added_utils,
-            mRS_list_time_input_treatment,
-            mRS_list_no_treatment,
-            mRS_dist_mix,
-            util=False)
-    st.latex(big_p_str)
+    cols = st.columns(2)
+    with cols[0]:
+        st.write('Cumulative weighted mRS:')
+        big_p_str = build_latex_cumsum_string(
+                weighted_added_utils,
+                mRS_list_time_input_treatment,
+                mRS_list_no_treatment,
+                mRS_dist_mix,
+                util=False)
+        st.latex(big_p_str)
 
-    st.write('Sums for the cumulative weighted utility:')
-    big_p_str = build_latex_cumsum_string(
-            weighted_added_utils,
-            mRS_list_time_input_treatment,
-            mRS_list_no_treatment,
-            mRS_dist_mix,
-            util=True)
-    st.latex(big_p_str)
+    with cols[1]:
+        st.write('Cumulative weighted utility:')
+        big_p_str = build_latex_cumsum_string(
+                weighted_added_utils,
+                mRS_list_time_input_treatment,
+                mRS_list_no_treatment,
+                mRS_dist_mix,
+                util=True)
+        st.latex(big_p_str)
 
     # Check:
     # st.write(weighted_added_utils[-1])
@@ -207,10 +200,10 @@ def build_latex_cumsum_string(
     cumulative_changes = 0.0
     big_p_str = r'''\begin{align*}'''
     # Add column headings:
-    big_p_str += (
-        r'''& \mathrm{Treated} & & \mathrm{Not\ treated} ''' +
-        r'''& \mathrm{Proportion} \\'''
-        )
+    # big_p_str += (
+    #     r'''& \mathrm{Treated} & & \mathrm{Not\ treated} ''' +
+    #     r'''& \mathrm{Proportion} \\'''
+    #     )
     for i in range(1, len(weighted_added_utils)):
         if weighted_added_utils[i] - weighted_added_utils[i-1] != 0:
 
@@ -238,27 +231,27 @@ def build_latex_cumsum_string(
             p_str = ''
 
             # First weight:
-            p_str += r'''(&\textcolor{'''
+            p_str += r'''(\textcolor{'''
             p_str += f'{colour_list[mRS_list_time_input_treatment[i]]}'
             p_str += r'''}{'''
-            if value_treated >= 0:
-                # Add sneaky + for alignment
-                p_str += r'\phantom{+}'
+            # if value_treated >= 0:
+            #     # Add sneaky + for alignment
+            #     p_str += r'\phantom{+}'
             p_str += p_str_treated
-            p_str += r'''}&-&\textcolor{'''
+            p_str += r'''}-&\textcolor{'''
 
             # Second weight:
             p_str += f'{colour_list[mRS_list_no_treatment[i]]}'
             p_str += r'''}{'''
-            if value_no_treatment >= 0:
-                # Add sneaky + for alignment
-                p_str += r'\phantom{+}'
+            # if value_no_treatment >= 0:
+            #     # Add sneaky + for alignment
+            #     p_str += r'\phantom{+}'
             p_str += p_str_no_treatment
-            p_str += r'''} )& \times '''
+            p_str += r'''} ) & \times '''
             # Bin widths:
             p_str += p_str_bin_width
             # Value of this line:
-            p_str += r''' = &'''
+            p_str += r''' = '''
             value_here = (
                 (value_treated - value_no_treatment) * bin_width
             )
@@ -271,7 +264,7 @@ def build_latex_cumsum_string(
                 value_here = round(value_here, 2)
             cumulative_changes += value_here
 
-            if value_here >= 0:
+            if value_here > 0:
                 # Add sneaky + for alignment
                 p_str += r'\phantom{+}'
             if util is True:
@@ -287,7 +280,7 @@ def build_latex_cumsum_string(
     # Add total beneath the rest:
     # big_p_str += r'''& & & & & & -----\\\\'''
     big_p_str += r'''\hline'''
-    big_p_str += r'''& & & & \mathrm{Total}: &'''
+    big_p_str += r'''& & \mathrm{Total}: '''
 
     if cumulative_changes >= 0:
         # Add sneaky + for alignment

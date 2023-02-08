@@ -54,6 +54,23 @@ def main():
         )
     write_text_from_file('pages/text_for_pages/2_Intro_for_demo.txt',
                          head_lines_to_skip=2)
+    # Write these in columns:
+    cols_cases = st.columns(2)
+    with cols_cases[0]:
+        st.markdown(''.join([
+            '__Case 1:__ all eligible patients ',
+            'receive IVT at the IVT-only centre, ',
+            'and then patients requiring MT ',
+            'are transported to the IVT+MT centre ',
+            'for further treatment.'
+        ]))
+    with cols_cases[1]:
+        st.markdown(''.join([
+            '__Case 2:__ all patients are transported ',
+            'directly to the IVT+MT centre ',
+            'and receive the appropriate treatments there.'
+        ]))
+
 
     # ###########################
     # ########## SETUP ##########
@@ -99,9 +116,13 @@ def main():
         # Place an empty container here now, and later
         # put the summary times in it.
         container_summary_times = st.container()
-
-        # Take the inputs:
+        # Also put the pathway plot and time inputs in here:
         with st.expander('Patient pathway'):
+            container_pathway_plot = st.container()
+            container_pathway_inputs = st.container()
+
+        with container_pathway_inputs:
+            # Take the inputs:
             st.write(
                 'Each step uses times in minutes. ' +
                 'To remove a step, set the value to zero.'
@@ -113,6 +134,7 @@ def main():
              case1_time_to_mt, case2_time_to_ivt, case2_time_to_mt) = \
                 outcome_utilities.inputs.inputs_pathway(cols_timeline)
 
+        with container_pathway_plot:
             # Draw timelines
             make_timeline_plot([case1_time_dict, case2_time_dict])
 
@@ -277,8 +299,22 @@ def main():
             'ICH'
         ])
 
+        explanation_str = '''
+            We can draw some of the data from the table in the
+            "mRS distributions at the treatment times" section above
+            to create bar charts of mRS probability distributions.
+
+            The weighted mean utility and mRS is calculated using
+            those regions of the chart where the mRS is different
+            between the "No treatment" and "Treated at..." bars.
+            Each line in the following sums calculates
+            the _outcome if treated_ minus the _outcome if not treated_
+            all multiplied by the _proportion of the population with
+            this change in outcome_.
+            '''
         with tab1:
             # nLVO IVT
+            st.markdown(explanation_str)
             st.subheader('Case 1')
             outcome_utilities.container_details_cumulative_changes.\
                 draw_cumulative_changes(
@@ -297,6 +333,7 @@ def main():
 
         with tab2:
             # LVO IVT
+            st.markdown(explanation_str)
             st.subheader('Case 1')
             outcome_utilities.container_details_cumulative_changes.\
                 draw_cumulative_changes(
@@ -315,6 +352,7 @@ def main():
 
         with tab3:
             # LVO MT
+            st.markdown(explanation_str)
             st.subheader('Case 1')
             outcome_utilities.container_details_cumulative_changes.\
                 draw_cumulative_changes(
