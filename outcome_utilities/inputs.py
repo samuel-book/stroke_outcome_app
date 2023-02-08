@@ -195,20 +195,20 @@ def inputs_patient_population():
             max_value=100,
             value=35
             )
-        prop_ich = st.number_input(
-            label='ICH',
-            min_value=0,
-            max_value=100,
-            value=0
-            )
+        # prop_ich = st.number_input(
+        #     label='ICH',
+        #     min_value=0,
+        #     max_value=100,
+        #     value=0
+        #     )
 
         # Convert from percentage to fraction:
         prop_nlvo *= 0.01
         prop_lvo *= 0.01
-        prop_ich *= 0.01
+        # prop_ich *= 0.01
 
         # Sanity check - do the proportions sum to 100%?
-        sum_props = np.sum([prop_nlvo, prop_lvo, prop_ich])
+        sum_props = np.sum([prop_nlvo, prop_lvo])
         if sum_props != 1:
             st.warning(':warning: Proportions should sum to 100%.')
 
@@ -217,7 +217,7 @@ def inputs_patient_population():
     prop_dict = dict(
         nlvo=prop_nlvo,
         lvo=prop_lvo,
-        ich=prop_ich
+        # ich=prop_ich
     )
     return prop_dict
 
@@ -257,14 +257,14 @@ def inputs_patient_population_advanced(prop_dict):
             step=0.1,
             format='%3.1f'
             )
-        prop_ich_treated = st.number_input(
-            label='ICH treated',
-            min_value=0.0,
-            max_value=100.0,
-            value=0.0,
-            step=0.1,
-            format='%3.1f'
-            )
+        # prop_ich_treated = st.number_input(
+        #     label='ICH treated',
+        #     min_value=0.0,
+        #     max_value=100.0,
+        #     value=0.0,
+        #     step=0.1,
+        #     format='%3.1f'
+        #     )
 
         prop_lvo_mt_also_receiving_ivt = st.number_input(
             label=(
@@ -282,7 +282,7 @@ def inputs_patient_population_advanced(prop_dict):
         prop_nlvo_treated_ivt_only *= 0.01
         prop_lvo_treated_ivt_only *= 0.01
         prop_lvo_treated_ivt_mt *= 0.01
-        prop_ich_treated *= 0.01
+        # prop_ich_treated *= 0.01
         prop_lvo_mt_also_receiving_ivt *= 0.01
 
         st.form_submit_button(label='Submit')
@@ -297,7 +297,7 @@ def inputs_patient_population_advanced(prop_dict):
     prop_dict['nlvo_treated_ivt_only'] = prop_nlvo_treated_ivt_only
     prop_dict['lvo_treated_ivt_only'] = prop_lvo_treated_ivt_only
     prop_dict['lvo_treated_ivt_mt'] = prop_lvo_treated_ivt_mt
-    prop_dict['ich_treated'] = prop_ich_treated
+    # prop_dict['ich_treated'] = prop_ich_treated
     prop_dict['lvo_mt_also_receiving_ivt'] = prop_lvo_mt_also_receiving_ivt
     prop_dict['treated_population'] = treated_population
 

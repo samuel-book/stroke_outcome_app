@@ -90,10 +90,10 @@ def main():
 
         # Proportion of nLVO / LVO / ICH:
         with st.expander('Stroke types'):
-            st.warning(
-                ':warning: Currently the ICH option ' +
-                'does not impact the change in mRS or utility.'
-                )
+            # st.warning(
+            #     ':warning: Currently the ICH option ' +
+            #     'does not impact the change in mRS or utility.'
+            #     )
             prop_dict = outcome_utilities.inputs.inputs_patient_population()
 
         # Percentages of each group who receive treatment:
@@ -259,36 +259,36 @@ def main():
         write_text_from_file('pages/text_for_pages/2_Probs_with_time.txt',
                              head_lines_to_skip=3)
 
-        tab1, tab2, tab3, tab4 = st.tabs([
+        tabs_probs = st.tabs([
             'nLVO treated with IVT',
             'LVO treated with IVT only',
             'LVO treated with MT',
-            'ICH'
+            # 'ICH'
         ])
 
-        with tab1:
+        with tabs_probs[0]:
             outcome_utilities.container_details_prob_vs_time.\
                 plot_probs_with_time(
                     nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
             outcome_utilities.container_details_prob_vs_time.\
                 table_probs_with_time(
                     nlvo_ivt_case1_dict, nlvo_ivt_case2_dict)
-        with tab2:
+        with tabs_probs[1]:
             outcome_utilities.container_details_prob_vs_time.\
                 plot_probs_with_time(
                     lvo_ivt_case1_dict, lvo_ivt_case2_dict)
             outcome_utilities.container_details_prob_vs_time.\
                 table_probs_with_time(
                     lvo_ivt_case1_dict, lvo_ivt_case2_dict)
-        with tab3:
+        with tabs_probs[2]:
             outcome_utilities.container_details_prob_vs_time.\
                 plot_probs_with_time(
                     lvo_mt_case1_dict, lvo_mt_case2_dict)
             outcome_utilities.container_details_prob_vs_time.\
                 table_probs_with_time(
                     lvo_mt_case1_dict, lvo_mt_case2_dict)
-        with tab4:
-            st.write('Nothing to see here.')
+        # with tab4:
+        #     st.write('Nothing to see here.')
 
     # ----- Details 2: Cumulative changes -----
     with st.expander('2: Cumulative changes in mRS and utility'):
@@ -307,14 +307,14 @@ def main():
             this change in outcome_.
             ''')
 
-        tab1, tab2, tab3, tab4 = st.tabs([
+        tabs = st.tabs([
             'nLVO treated with IVT',
             'LVO treated with IVT only',
             'LVO treated with MT',
-            'ICH'
+            # 'ICH'
         ])
 
-        with tab1:
+        with tabs[0]:
             # nLVO IVT
             st.subheader('Case 1')
             outcome_utilities.container_details_cumulative_changes.\
@@ -332,7 +332,7 @@ def main():
                     'nLVO_IVT_case2'
                     )
 
-        with tab2:
+        with tabs[1]:
             # LVO IVT
             st.subheader('Case 1')
             outcome_utilities.container_details_cumulative_changes.\
@@ -350,7 +350,7 @@ def main():
                     'LVO_IVT_case2'
                     )
 
-        with tab3:
+        with tabs[2]:
             # LVO MT
             st.subheader('Case 1')
             outcome_utilities.container_details_cumulative_changes.\
@@ -367,9 +367,6 @@ def main():
                     case2_time_to_mt,
                     'LVO_MT_case2'
                     )
-
-        with tab4:
-            st.write('Nothing to see here.')
 
     # ----- Details 3: Sum up changes -----
     with st.expander('3: Calculations for overall changes in utility and mRS'):
