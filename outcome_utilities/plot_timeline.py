@@ -243,13 +243,14 @@ def plot_simple_map(travel_to_ivt, travel_ivt_to_mt, travel_to_mt):
 
     x_span = x_max - x_min
     y_span = y_max - y_min
-    span = np.max([x_span, y_span])
-
 
     fig = go.Figure()
 
     labels = ['Onset<br>location', 'IVT<br>centre', 'IVT+MT<br>centre']
-    label_y_offsets = [y_span*0.2, y_span*0.2, -y_span*0.2]
+    label_offset = y_span*0.2
+    if label_offset < 0.15*travel_to_ivt:
+        label_offset = 0.15*travel_to_ivt
+    label_y_offsets = [label_offset, label_offset, -label_offset]
     emoji = ['', '\U0001f3e5', '\U0001f3e5']
     for i, coords in enumerate(all_coords):
         # Draw marker
@@ -277,31 +278,57 @@ def plot_simple_map(travel_to_ivt, travel_ivt_to_mt, travel_to_mt):
             showarrow=False
             )
 
-    # Draw connections:
-    fig.add_trace(go.Scatter(
-            x=[coords_onset[0], coords_ivt[0]],
-            y=[coords_onset[1], coords_ivt[1]],
-            mode='lines',
-            line=dict(color='red'),
-            showlegend=False,
-            hoverinfo='skip'
-        ))
-    fig.add_trace(go.Scatter(
-            x=[coords_ivt[0], coords_mt[0]],
-            y=[coords_ivt[1], coords_mt[1]],
-            mode='lines',
-            line=dict(color='red'),
-            showlegend=False,
-            hoverinfo='skip'
-        ))
-    fig.add_trace(go.Scatter(
-            x=[coords_onset[0], coords_mt[0]],
-            y=[coords_onset[1], coords_mt[1]],
-            mode='lines',
-            line=dict(color='blue'),
-            showlegend=False,
-            hoverinfo='skip'
-        ))
+    # Draw links between the centres.
+    # Setup for the lines:
+    coords_links = [
+        [coords_onset, coords_ivt],
+        [coords_ivt, coords_mt],
+        [coords_onset, coords_mt]
+    ]
+    colours_links = [plotly_colours[0], plotly_colours[0], plotly_colours[1]]
+    linestyles_links = ['solid', 'solid', 'dot']
+
+    # Setup for the text labels:
+    label_link_x_offsets = [
+        0,
+        label_offset * np.sin(th) * 0.5,
+        -label_offset * np.sin(th) * 0.5
+        ]
+    label_link_y_offsets = [
+        label_offset * 0.5,
+        0.0,
+        0.0
+        ]
+    labels_link = [
+        f'{travel_to_ivt}' + '<br> \U0001f691',
+        '\U0001f691 <br>' + f'{travel_ivt_to_mt}',
+        '\U0001f691 <br>' + f'{travel_to_mt}',
+        ]
+
+    for i, coords in enumerate(coords_links):
+        x = [coords[0][0], coords[1][0]]
+        y = [coords[0][1], coords[1][1]]
+        # Draw connections:
+        fig.add_trace(go.Scatter(
+                x=x,
+                y=y,
+                mode='lines',
+                line=dict(color=colours_links[i], dash=linestyles_links[i]),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+        # Find x and y coords halfway along this line:
+        x_halfway = np.mean(x)
+        y_halfway = np.mean(y)
+        # Draw annotation of distance:
+        fig.add_annotation(
+            x=x_halfway + label_link_x_offsets[i],
+            y=y_halfway + label_link_y_offsets[i],
+            text=labels_link[i],
+            font=dict(color=colours_links[i]),
+            showarrow=False
+            )
+
 
     # Remove x and y axis ticks:
     fig.update_xaxes(dict(

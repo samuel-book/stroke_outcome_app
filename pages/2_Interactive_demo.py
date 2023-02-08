@@ -50,7 +50,7 @@ def main():
     container_intro = st.container()
     with container_intro:
         # Write text at the top of the page:
-        st.markdown('# Interactive demo')
+        st.markdown('# Stroke outcome model')
         st.info(
             ':information_source: ' +
             'For acronym reference, see the introduction page.'
@@ -170,6 +170,9 @@ def main():
 
     with container_intro:
         if time_input_type == 'Pathway':
+            # Write text to explain this:
+            write_text_from_file('pages/text_for_pages/2_Intro_for_pathway.txt',
+                                head_lines_to_skip=2)
             # Draw a map
             cols_cases = st.columns(3)
             i = 1
@@ -179,25 +182,27 @@ def main():
                     case1_time_dict['travel_ivt_to_mt'],
                     case2_time_dict['travel_to_mt'],
                     )
-        else:
-            cols_cases = st.columns(2)
-            i = 0
 
-        # Write these in columns:
-        with cols_cases[i + 0]:
-            st.markdown(''.join([
-                '__Case 1:__ all eligible patients ',
-                'receive IVT at the IVT-only centre, ',
-                'and then patients requiring MT ',
-                'are transported to the IVT+MT centre ',
-                'for further treatment.'
-            ]))
-        with cols_cases[i + 1]:
-            st.markdown(''.join([
-                '__Case 2:__ all patients are transported ',
-                'directly to the IVT+MT centre ',
-                'and receive the appropriate treatments there.'
-            ]))
+            # Write these in columns:
+            with cols_cases[i + 0]:
+                st.markdown('''
+                    __Case 1:__
+
+                    1. All eligible patients receive IVT at the IVT-only centre.
+
+                    2. Then patients requiring MT are transported to the IVT+MT centre for further treatment.
+
+                    '''
+                )
+            with cols_cases[i + 1]:
+                st.markdown('''
+                    __Case 2:__
+
+                    1. All patients are transported directly to the IVT+MT centre for treatment.
+                ''')
+        else:
+            # Don't write anything if it's the simple time input.
+            pass
 
     # ##################################
     # ########## CALCULATIONS ##########

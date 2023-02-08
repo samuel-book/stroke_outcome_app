@@ -1,0 +1,7 @@
+# To be printed as markdown on the demo page. 
+# ---------------------------------------------------------------------
+
+All of the patients will share a timeline, including factors such as the travel times to the nearest hospitals and the times between arrival at the hospital and receiving the appropriate treatment. 
+
+We have invented a scenario where there is a choice of two hospitals for the patients to travel to. One of these can only provide IVT, while the other provides both IVT and MT.
+

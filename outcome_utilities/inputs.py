@@ -190,7 +190,7 @@ def inputs_simple_times(pathway_cols):
             label='Time to IVT',
             min_value=0,
             max_value=600,
-            value=180,
+            value=120,
             step=5,
             key='Case1_IVT'
             )
@@ -198,7 +198,7 @@ def inputs_simple_times(pathway_cols):
             label='Time to MT',
             min_value=0,
             max_value=600,
-            value=240,
+            value=320,
             step=5,
             key='Case1_MT'
             )
@@ -211,7 +211,7 @@ def inputs_simple_times(pathway_cols):
             label='Time to IVT',
             min_value=0,
             max_value=600,
-            value=210,
+            value=140,
             step=5,
             key='Case2_IVT'
             )
@@ -219,7 +219,7 @@ def inputs_simple_times(pathway_cols):
             label='Time to MT',
             min_value=0,
             max_value=600,
-            value=270,
+            value=200,
             step=5,
             key='Case2_MT'
             )
