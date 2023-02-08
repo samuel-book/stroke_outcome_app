@@ -292,14 +292,8 @@ def main():
 
     # ----- Details 2: Cumulative changes -----
     with st.expander('2: Cumulative changes in mRS and utility'):
-        tab1, tab2, tab3, tab4 = st.tabs([
-            'nLVO treated with IVT',
-            'LVO treated with IVT only',
-            'LVO treated with MT',
-            'ICH'
-        ])
 
-        explanation_str = '''
+        st.markdown('''
             We can draw some of the data from the table in the
             "mRS distributions at the treatment times" section above
             to create bar charts of mRS probability distributions.
@@ -311,10 +305,17 @@ def main():
             the _outcome if treated_ minus the _outcome if not treated_
             all multiplied by the _proportion of the population with
             this change in outcome_.
-            '''
+            ''')
+
+        tab1, tab2, tab3, tab4 = st.tabs([
+            'nLVO treated with IVT',
+            'LVO treated with IVT only',
+            'LVO treated with MT',
+            'ICH'
+        ])
+
         with tab1:
             # nLVO IVT
-            st.markdown(explanation_str)
             st.subheader('Case 1')
             outcome_utilities.container_details_cumulative_changes.\
                 draw_cumulative_changes(
@@ -333,7 +334,6 @@ def main():
 
         with tab2:
             # LVO IVT
-            st.markdown(explanation_str)
             st.subheader('Case 1')
             outcome_utilities.container_details_cumulative_changes.\
                 draw_cumulative_changes(
@@ -352,7 +352,6 @@ def main():
 
         with tab3:
             # LVO MT
-            st.markdown(explanation_str)
             st.subheader('Case 1')
             outcome_utilities.container_details_cumulative_changes.\
                 draw_cumulative_changes(

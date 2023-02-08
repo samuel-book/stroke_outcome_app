@@ -392,9 +392,9 @@ def find_useful_dist_dict(
     # Set up headings for the rows and columns:
     headings_rows = [
         'Pre-stroke',
-        'Treatment at 0 hours',
-        f'Treatment at {time_input//60} hours {time_input%60} minutes',
-        f'Treatment at {time_no_effect//60} hours {time_no_effect%60} minutes',
+        'Treatment at 0hr',
+        f'Treatment at {time_input//60}hr {time_input%60}min',
+        f'Treatment at {time_no_effect//60}hr {time_no_effect%60}min',
         'Not treated'
         ]
     headings_cols_cumsum = [f'mRS<={i}' for i in range(7)]
