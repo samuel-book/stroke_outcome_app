@@ -27,6 +27,7 @@ def draw_cumulative_changes(dist_dict, treatment_time, key_str=''):
 
 
 def do_prob_bars(dist_dict, time_input):
+
     # Get the information from these keys in the input dist_dict:
     dists = [
         'dist_no_treatment',
@@ -42,16 +43,23 @@ def do_prob_bars(dist_dict, time_input):
     y_labels = [
         'No treatment',
         'Treated at ' + f'{time_input//60}hr ' + f'{time_input%60:02d}min',
-        'Pre-stroke'
+        'Pre-stroke',
+        ''
         ]
     # ^ keep label formatting for e.g. 01 minutes in the middle bar
     # otherwise the axis jumps about as the label changes size
     # between "9 minutes" and "10 minutes" (extra character).
 
     # Place the bars at these locations:
-    y_vals = [0, 1, 2]
+    y_vals = [0, 2, 3, 1]
 
     fig = go.Figure()
+    ht = (
+        'mRS≤%{customdata[0]}: %{customdata[1]:.3f}' +
+        '<br>' +               # (line break)
+        'mRS=%{customdata[0]}: %{x:.3f}' +
+        '<extra></extra>'      # Remove content from secondary box.
+    )
     # Add the stacked bar for each distribution as a separate trace.
     for i, dist in enumerate(dists):
         # Only add the mRS colours to the legend if this is the
@@ -74,23 +82,59 @@ def do_prob_bars(dist_dict, time_input):
                 name=str(mRS),           # name for legend
                 showlegend=show_legend,  # True/False appear in legend
                 customdata=custom_data,
-                width=0.7                # Skinniness of bars
-            ))
+                width=0.7,               # Skinniness of bars
+                hovertemplate=ht
+            ), )
     # The custom_data aren't directly plotted in the previous lines,
     # but are loaded ready for use with the hover template later.
 
+
+
+    # Find dist for changed row:
+    for i, cum_bin_size in enumerate(dist_dict['mRS_dist_mix']):
+        # Pull out the useful quantities:
+        bin_size = (
+            dist_dict['mRS_dist_mix'][i] - dist_dict['mRS_dist_mix'][i-1])
+        mRS_treated = dist_dict['mRS_list_time_input_treatment'][i]
+        mRS_not_treated = dist_dict['mRS_list_no_treatment'][i]
+
+        if mRS_treated != mRS_not_treated:
+            colour = colour_list[mRS_not_treated]
+            hi = 'all'  # Doesn't matter as this gets overwritten by ht
+            ht = (
+                'mRS changes from %{customdata[0]} to %{customdata[1]}' +
+                '<br>' +
+                'Proportion: %{x}' +
+                # Remove contents of secondary box:
+                '<extra></extra>'
+            )
+        else:
+            # Set colour to transparent:
+            colour = 'rgba(0, 0, 0, 0)'
+            # Set hover info and template so that nothing is displayed:
+            hi='skip'
+            ht = None
+        if i > 0:
+            custom_data = np.stack((
+                [mRS_not_treated],
+                [mRS_treated],
+            ), axis=-1)
+            # Draw the bar:
+            fig.add_trace(go.Bar(
+                x=[bin_size],
+                y=[y_vals[3]],
+                marker=dict(color=colour, pattern_shape='/'),
+                orientation='h',         # horizontal
+                name='Change',           # name for legend
+                showlegend=show_legend,  # True/False appear in legend
+                customdata=custom_data,
+                width=0.7,               # Skinniness of bars
+                hoverinfo=hi,
+                hovertemplate=ht
+            ))
+
     # Change the bar mode
     fig.update_layout(barmode='stack')
-
-    # Update message displayed on hover:
-    fig.update_traces(
-        hovertemplate=(
-            'mRS≤%{customdata[0]}: %{customdata[1]:.3f}' +
-            '<br>' +               # (line break)
-            'mRS=%{customdata[0]}: %{x:.3f}' +
-            '<extra></extra>'      # Remove content from secondary box.
-            )
-    )
 
     # Set axis labels:
     fig.update_xaxes(title_text='Cumulative probability')
