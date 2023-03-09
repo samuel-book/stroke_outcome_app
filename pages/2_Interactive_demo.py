@@ -50,7 +50,7 @@ def main():
     container_intro = st.container()
     with container_intro:
         # Write text at the top of the page:
-        st.markdown('# Stroke outcome model')
+        st.markdown('# :clipboard: Population stroke outcomes')
         st.info(
             ':information_source: ' +
             'For acronym reference, see the introduction page.'
@@ -262,7 +262,7 @@ def main():
     # ###########################
     # ######### RESULTS #########
     # ###########################
-    st.markdown('# Results')
+    st.markdown('## :bookmark_tabs: Results')
     # ----- Show metric for +/- mRS and utility -----
     outcome_utilities.container_results_metrics.main(
         # Case 1:
@@ -285,8 +285,8 @@ def main():
     # ######### DETAILS #########
     # ###########################
     st.write('-'*50)
-    st.header('Details of the calculation')
-    st.write('The following bits detail the calculation.')
+    st.markdown('## :abacus: How does the model work?')
+    # st.write('The following bits detail the calculation.')
 
     # ----- Details 1: Probability vs time -----
     with st.expander('1: mRS distributions at the treatment times'):
