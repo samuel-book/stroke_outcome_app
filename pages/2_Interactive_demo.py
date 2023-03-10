@@ -62,9 +62,9 @@ def main():
 
         # Add gif of the model summary:
         try:
-            file_ = open('./summary_image/summary_4frame_trans.gif', "rb")
+            file_ = open('./summary_image/summary_animated.gif', "rb")
         except (FileNotFoundError, st.runtime.media_file_storage.MediaFileStorageError):
-            file_ = open('./stroke_outcome_app/summary_image/summary_4frame_trans.gif', "rb")
+            file_ = open('./stroke_outcome_app/summary_image/summary_animated.gif', "rb")
         contents = file_.read()
         data_url = base64.b64encode(contents).decode("utf-8")
         file_.close()
