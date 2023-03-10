@@ -64,7 +64,7 @@ def main():
         try:
             file_ = open('./summary_image/summary_4frame_trans.gif', "rb")
         except (FileNotFoundError, st.runtime.media_file_storage.MediaFileStorageError):
-            file_ = open('./stroke_outcome_app/summary_image/summary_4frame_trans.gif')
+            file_ = open('./stroke_outcome_app/summary_image/summary_4frame_trans.gif', "rb")
         contents = file_.read()
         data_url = base64.b64encode(contents).decode("utf-8")
         file_.close()
