@@ -60,6 +60,11 @@ def main():
         # write_text_from_file('pages/text_for_pages/2_Intro_for_demo.txt',
         #                     head_lines_to_skip=2)
 
+        st.markdown(''.join([
+            'We can find the distribution of mRS scores for ',
+            'a mixed population by combining multiple distributions:'
+        ]))
+
         # Add gif of the model summary:
         try:
             file_ = open('./summary_image/summary_animated.gif', "rb")
@@ -75,7 +80,12 @@ def main():
             unsafe_allow_html=True,
         )
 
-        st.markdown('In this demo we will compare the expected outcomes for two cases. ')
+        st.markdown(''.join([
+            'The mRS distribution of the treated populations will ',
+            'depend on the time of treatment, '
+            'where generally faster treatment times will result in ',
+            'more good outcomes.'
+        ]))
 
     # ###########################
     # ########## SETUP ##########
@@ -188,9 +198,14 @@ def main():
 
     with container_intro:
         if time_input_type == 'Pathway':
-            # Write text to explain this:
-            write_text_from_file('pages/text_for_pages/2_Intro_for_pathway.txt',
-                                head_lines_to_skip=2)
+            # st.markdown('-' * 50)
+            st.markdown('''
+            In this demo we will compare the expected outcomes for two cases.
+            We have invented a scenario where there is a choice of two hospitals for the patients to travel to. One of these can only provide IVT, while the other provides both IVT and MT.
+            ''')
+            # # Write text to explain this:
+            # write_text_from_file('pages/text_for_pages/2_Intro_for_pathway.txt',
+            #                     head_lines_to_skip=2)
             # Draw a map
             cols_cases = st.columns(3)
             i = 1
@@ -219,8 +234,9 @@ def main():
                     1. All patients are transported directly to the IVT+MT centre for treatment.
                 ''')
         else:
-            # Don't write anything if it's the simple time input.
-            pass
+            # Simple time input, less to write:
+            st.markdown('In this demo we will compare the expected outcomes for two cases. ')
+            # pass
 
     # ##################################
     # ########## CALCULATIONS ##########
@@ -281,6 +297,12 @@ def main():
     # ######### RESULTS #########
     # ###########################
     st.markdown('## :bookmark_tabs: Results')
+    st.info(
+            ''.join([
+                'To change the treatment times and patient populations, ',
+                'change the settings in the left sidebar. ']),
+            icon='ℹ️'
+            )
     # ----- Show metric for +/- mRS and utility -----
     outcome_utilities.container_results_metrics.main(
         # Case 1:
