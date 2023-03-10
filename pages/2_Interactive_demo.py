@@ -10,6 +10,8 @@ metric (without rounding).
 
 # ----- Imports -----
 import streamlit as st
+# For drawing gif:
+import base64
 
 # Add an extra bit to the path if we need to.
 # Try importing something as though we're running this from the same
@@ -52,12 +54,28 @@ def main():
         # Write text at the top of the page:
         st.markdown('# :clipboard: Population stroke outcomes')
         st.info(
-            ':information_source: ' +
-            'For acronym reference, see the introduction page.'
+            'For acronym reference, see the introduction page.',
+            icon='ℹ️'
             )
-        write_text_from_file('pages/text_for_pages/2_Intro_for_demo.txt',
-                            head_lines_to_skip=2)
+        # write_text_from_file('pages/text_for_pages/2_Intro_for_demo.txt',
+        #                     head_lines_to_skip=2)
 
+        # Add gif of the model summary:
+        try:
+            file_ = open('./summary_image/summary_4frame_trans.gif', "rb")
+        except (FileNotFoundError, st.runtime.media_file_storage.MediaFileStorageError):
+            file_ = open('./stroke_outcome_app/summary_image/summary_4frame_trans.gif')
+        contents = file_.read()
+        data_url = base64.b64encode(contents).decode("utf-8")
+        file_.close()
+
+        st.markdown(
+            f'''<center><img src="data:image/gif;base64,{data_url}" width="700"
+                height="350" alt="Summary gif of finding the mRS distribution after stroke">''',
+            unsafe_allow_html=True,
+        )
+
+        st.markdown('In this demo we will compare the expected outcomes for two cases. ')
 
     # ###########################
     # ########## SETUP ##########
@@ -284,6 +302,7 @@ def main():
     # ###########################
     # ######### DETAILS #########
     # ###########################
+
     st.write('-'*50)
     st.markdown('## :abacus: How does the model work?')
     # st.write('The following bits detail the calculation.')
