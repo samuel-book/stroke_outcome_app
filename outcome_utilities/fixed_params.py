@@ -11,8 +11,8 @@ def page_setup():
     # browser.
     # Set page to widescreen must be first call to st.
     st.set_page_config(
-        page_title='Stroke outcome modelling',
-        page_icon=':ambulance:',
+        page_title='Population stroke outcomes',
+        page_icon='📋',
         # layout='wide'
         )
 
