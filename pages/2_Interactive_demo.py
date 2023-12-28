@@ -59,6 +59,22 @@ def main():
             )
         # write_text_from_file('pages/text_for_pages/2_Intro_for_demo.txt',
         #                     head_lines_to_skip=2)
+	
+	# TESTING for rainbow text issue.
+	emoji_str = '✨:sparkles:❔:grey_question:🚑:ambulance:4️⃣:four:'
+
+	st.markdown(
+	    f'''
+	    normal {emoji_str}  
+	    :rainbow[rainbow {emoji_str}]  
+	    :blue[blue {emoji_str}]  
+	    :green[green {emoji_str}]  
+	    :orange[orange {emoji_str}]  
+	    :red[red {emoji_str}]  
+	    :violet[violet {emoji_str}]  
+	    :grey[grey {emoji_str}]
+	    '''
+	    )
 
         st.markdown(''.join([
             'We can find the distribution of mRS scores for ',
